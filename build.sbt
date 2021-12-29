@@ -1,73 +1,87 @@
-val scala3Version = "3.1.0"
-
-ThisBuild / scalaVersion  := scala3Version
-
+import com.typesafe.sbt.pgp
+import sbt.Credentials
+import sbt.Keys.{credentials, publishTo, test}
 import sbtwelcome._
 
+enablePlugins(GitVersioning)
+
+logoColor := scala.Console.GREEN
+name := "franz"
+parallelExecution := false
+packageOptions in (Compile, packageBin) += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown"))
+git.remoteRepo := s"git@github.com:aaronp/franz.git"
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+libraryDependencies ++= deps.all
+
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+resolvers += "confluent" at "https://packages.confluent.io/maven/"
+
+ThisBuild / scalaVersion := "3.1.0"
+buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion)
+buildInfoPackage := "franz.build"
+autoAPIMappings := true
+ghpagesNoJekyll := true
+scalafmtOnCompile := true
+scalafmtVersion := "1.4.0"
+versionScheme := Some("early-semver")
+organization := "com.github.aaronp"
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+publishMavenStyle := true
+exportJars := false
+pomIncludeRepository := (_ => false)
+publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+git.gitTagToVersionNumber := { tag: String =>
+  if (tag matches "v?[0-9]+\\..*") {
+    Some(tag)
+  } else None
+}
+
 logo :=
-  s""" 
-     |   ____  _____  ___   ____       ______    ___  ___ ___  ____  _       ____  ______    ___ 
-     |  |    |/ ___/ /   \ |    \     |      |  /  _]|   |   ||    \| |     /    ||      |  /  _]
-     |  |__  (   \_ |     ||  _  |    |      | /  [_ | _   _ ||  o  ) |    |  o  ||      | /  [_ 
-     |  __|  |\__  ||  O  ||  |  |    |_|  |_||    _]|  \_/  ||   _/| |___ |     ||_|  |_||    _]
-     | /  |  |/  \ ||     ||  |  |      |  |  |   [_ |   |   ||  |  |     ||  _  |  |  |  |   [_ 
-     | \  `  |\    ||     ||  |  |      |  |  |     ||   |   ||  |  |     ||  |  |  |  |  |     |
-     |  \____j \___| \___/ |__|__|      |__|  |_____||___|___||__|  |_____||__|__|  |__|  |_____|
+  s"""
+     |                                                                                      
+     |                                                                                            
+     |    ffffffffffffffff                                                                        
+     |   f::::::::::::::::f                                                                       
+     |  f::::::::::::::::::f                                                                      
+     |  f::::::fffffff:::::f                                                                      
+     |  f:::::f       ffffffrrrrr   rrrrrrrrr   aaaaaaaaaaaaa  nnnn  nnnnnnnn    zzzzzzzzzzzzzzzzz
+     |  f:::::f             r::::rrr:::::::::r  a::::::::::::a n:::nn::::::::nn  z:::::::::::::::z
+     | f:::::::ffffff       r:::::::::::::::::r aaaaaaaaa:::::an::::::::::::::nn z::::::::::::::z 
+     | f::::::::::::f       rr::::::rrrrr::::::r         a::::ann:::::::::::::::nzzzzzzzz::::::z  
+     | f::::::::::::f        r:::::r     r:::::r  aaaaaaa:::::a  n:::::nnnn:::::n      z::::::z   
+     | f:::::::ffffff        r:::::r     rrrrrrraa::::::::::::a  n::::n    n::::n     z::::::z    
+     |  f:::::f              r:::::r           a::::aaaa::::::a  n::::n    n::::n    z::::::z     
+     |  f:::::f              r:::::r          a::::a    a:::::a  n::::n    n::::n   z::::::z      
+     | f:::::::f             r:::::r          a::::a    a:::::a  n::::n    n::::n  z::::::zzzzzzzz
+     | f:::::::f             r:::::r          a:::::aaaa::::::a  n::::n    n::::n z::::::::::::::z
+     | f:::::::f             r:::::r           a::::::::::aa:::a n::::n    n::::nz:::::::::::::::z
+     | fffffffff             rrrrrrr            aaaaaaaaaa  aaaa nnnnnn    nnnnnnzzzzzzzzzzzzzzzzz
+     |                                                                                            
      |
-     |${version.value}
+     |${scala.Console.GREEN}franz version ${version.value}${scala.Console.RESET}
      |
-     |
-     |${scala.Console.GREEN}Json-Template ${scalaVersion.value}${scala.Console.RESET}
-     |
-     |""".stripMargin
+     |""".stripMargin.replaceAllLiterally("!", "\\")
 
 usefulTasks := Seq(
   UsefulTask("a", "~compile", "Compile with file-watch enabled"),
-  UsefulTask("b", "fmt", "Run scalafmt on the entire project"),
-  UsefulTask("c", "docs/mdoc", "create documentation"),
-  UsefulTask("d", "docs/docusaurusPublishGhpages", "publish documentation"),
-  UsefulTask("e", "publishLocal", "Publish the sbt plugin locally so that you can consume it from a different project"),
-  UsefulTask("f", "startDocusaurus", "Start Docusaurus"),
+  UsefulTask("b", "~test", "Test with file-watch enabled"),
+  UsefulTask("c", "release", "Release a new version (assumes you have ~/.sbt/.credentials set up)")
 )
-
-logoColor := scala.Console.GREEN
-
-
-val testDependencies = List(
-  "junit"                  % "junit"      % "4.13.2"  % Test,
-  "org.scalatest"          %% "scalatest" % "3.2.10" % Test,
-  "org.pegdown"            % "pegdown"    % "1.6.0" % Test
-)
-
-lazy val root = project
-  .in(file("."))
-  .settings(
-    name := "json-template",
-    version := "0.0.1-SNAPSHOT",
-  )
-  .settings(libraryDependencies ++= testDependencies)
-  .settings(libraryDependencies ++= List("circe-core", "circe-generic", "circe-parser").map(artifact => "io.circe" %% artifact % "0.14.1"))
-
-
-// lazy val expressions = project
-//   .in(file("expressions"))
-//   .dependsOn(avroRecords % "test->compile")
-//   .settings(name := "expressions", coverageMinimum := 30, coverageFailOnMinimum := true)
-//   .settings(commonSettings: _*)
-//   .settings(libraryDependencies ++= testDependencies)
-//   .settings(libraryDependencies ++= List("circe-core", "circe-generic", "circe-parser").map(artifact => "io.circe" %% artifact % "0.14.1"))
-//   .settings(libraryDependencies += ("com.github.aaronp" %% "eie" % "1.0.0").cross(CrossVersion.for3Use2_13))
-//   .settings(libraryDependencies ++= List(
-//     "org.apache.avro" % "avro"           % "1.10.0",
-//     "org.scala-lang" %% "scala3-staging" % "3.1.0"
-//   ))
 
 // see https://leonard.io/blog/2017/01/an-in-depth-guide-to-deploying-to-maven-central/
-pomIncludeRepository := (_ => false)
 
 // To sync with Maven central, you need to supply the following information:
-pomExtra in Global := {
-  <url>https://github.com/aaronp/json-template</url>
+//Global / pomExtra := {
+pomExtra := {
+  <url>https://github.com/aaronp/franz</url>
     <licenses>
       <license>
         <name>Apache 2</name>
@@ -78,32 +92,7 @@ pomExtra in Global := {
       <developer>
         <id>aaronp</id>
         <name>Aaron Pritzlaff</name>
-        <url>https://github.com/aaronp/json-template</url>
+        <url>https://github.com/aaronp/franz</url>
       </developer>
     </developers>
-}
-
-
-
-
-lazy val docs = project       // new documentation project
-  .in(file("site")) // important: it must not be docs/
-  .dependsOn(root)
-  .enablePlugins(MdocPlugin, DocusaurusPlugin)
-  .settings(
-    mdocVariables := Map("VERSION" -> version.value),
-    moduleName := "site",
-    mdocOut := baseDirectory.value.toPath.resolve("src/pages").toFile
-  )
-
-lazy val startDocusaurus = taskKey[String]("Builds the client").withRank(KeyRanks.APlusTask)
-
-startDocusaurus := {
-  import sys.process._
-  val workDir = new java.io.File("site")
-  val output  = sys.process.Process(Seq("npx", "docusaurus", "start"), workDir).!!
-//  val output  = sys.process.Process(Seq("npx", "docusaurus", "start")).!!
-  java.awt.Desktop.getDesktop.browse(new URI("http://localhost:3000/index.html"))
-  sLog.value.info(output)
-  output
 }

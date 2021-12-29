@@ -1,23 +1,6 @@
-# MDoc example
+# Franz 
+![https://github.com/aaronp/franz/actions](https://github.com/aaronp/franz/actions/workflows/ci.yml/badge.svg)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.aaronp/franz_3/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/com.github.aaronp/franz_3)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-# Basic project to test out mdoc
-See [mdoc](https://scalameta.org/mdoc/docs/installation.html)
-
-Docusaurus setup steps:
-```
-npx create-docusaurus@latest my-website classic
-cd my-website
-npx docusaurus start
-```
-
-## Created
-
-``` sbt new scala/scala3.g8```
-
-
-
-
-This is a normal sbt project. You can compile code with `sbt compile`, run it with `sbt run`, and `sbt console` will start a Scala 3 REPL.
-
-For more information on the sbt-dotty plugin, see the
-[scala3-example-project](https://github.com/scala/scala3-example-project/blob/main/README.md).
+Check out the [Documentation](https://aaronp.github.io/franz/)
