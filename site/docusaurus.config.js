@@ -6,15 +6,15 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'My Site',
-  tagline: 'Dinosaurs are cool',
+  title: 'Json Template',
+  tagline: 'template-up some json blocks',
   url: 'https://your-docusaurus-test-site.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
-  organizationName: 'nimbleapproach', // Usually your GitHub org/user name.
-  projectName: 'expresssions', // Usually your repo name.
+  organizationName: 'github', // Usually your GitHub org/user name.
+  projectName: 'json-template', // Usually your repo name.
   //customDocsPath: 'target/mdoc',
 
   presets: [
@@ -31,7 +31,7 @@ const config = {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            'https://github.com/aaronp/json-template/tree/main/packages/site/blogs/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -44,16 +44,16 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: 'Expressions',
+        title: 'Json Template',
         logo: {
-          alt: 'Expressions Logo',
+          alt: 'Json Template Logo',
           src: 'img/logo.svg',
         },
         items: [
-          {to: '/foo', label: 'Foo', position: 'left'},
+          {to: '/about', label: 'About', position: 'left'},
           {to: '/readme', label: 'Readme', position: 'left'},
           {
-            href: 'https://github.com/aaronp/expressions',
+            href: 'https://github.com/aaronp/json-template',
             label: 'GitHub',
             position: 'right',
           },
@@ -66,8 +66,8 @@ const config = {
             title: 'Docs',
             items: [
               {
-                label: 'Foo',
-                to: '/foo',
+                label: 'About',
+                to: '/about',
               },
             ],
           },
@@ -89,7 +89,7 @@ const config = {
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/aaronp/expressions',
+                href: 'https://github.com/aaronp/json-template',
               },
             ],
           },

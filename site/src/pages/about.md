@@ -2,7 +2,7 @@
 
 To install my project
 ```scala
-libraryDependencies += "com" % "lib" % "0.1.0-SNAPSHOT"
+libraryDependencies += "com.github.aaronp" % "json-template" % "0.1.0-SNAPSHOT"
 ```
 
 ```scala
