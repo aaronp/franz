@@ -1,5 +1,7 @@
 package expressions
 
+import org.slf4j.LoggerFactory
+
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -8,7 +10,7 @@ import scala.util.{Failure, Success, Try}
 class Cache[V](create: String => Try[V], default: Try[V] = Failure[V](new IllegalArgumentException("no default provided for empty script"))) {
   private object Lock
 
-  private lazy val logger = org.slf4j.LoggerFactory.getLogger(getClass)
+  private lazy val logger = LoggerFactory.getLogger(getClass)
   private var thunkByCode = Map[String, V]()
 
   def map[A](thunk: V => A): Cache[A] = new Cache[A](create.andThen(_.map(thunk)))

@@ -1,14 +1,4 @@
-# MDoc example
-
-# Basic project to test out mdoc
-See [mdoc](https://scalameta.org/mdoc/docs/installation.html)
-
-Docusaurus setup steps:
-```
-npx create-docusaurus@latest my-website classic
-cd my-website
-npx docusaurus start
-```
+# json template 
 
 ## Created
 

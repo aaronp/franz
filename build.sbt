@@ -6,20 +6,16 @@ import sbtwelcome._
 
 logo :=
   s""" 
-     |   ____  _____  ___   ____       ______    ___  ___ ___  ____  _       ____  ______    ___ 
-     |  |    |/ ___/ /   \ |    \     |      |  /  _]|   |   ||    \| |     /    ||      |  /  _]
-     |  |__  (   \_ |     ||  _  |    |      | /  [_ | _   _ ||  o  ) |    |  o  ||      | /  [_ 
-     |  __|  |\__  ||  O  ||  |  |    |_|  |_||    _]|  \_/  ||   _/| |___ |     ||_|  |_||    _]
-     | /  |  |/  \ ||     ||  |  |      |  |  |   [_ |   |   ||  |  |     ||  _  |  |  |  |   [_ 
-     | \  `  |\    ||     ||  |  |      |  |  |     ||   |   ||  |  |     ||  |  |  |  |  |     |
-     |  \____j \___| \___/ |__|__|      |__|  |_____||___|___||__|  |_____||__|__|  |__|  |_____|
      |
-     |${version.value}
+     |  ____  ___  _____  _  _    ____  ____  __  __  ____  __      __   ____  ____ 
+     | (_  _)/ __)(  _  )( !( )  (_  _)( ___)(  !/  )(  _ !(  )    /__! (_  _)( ___)
+     |.-_)(  !__ ! )(_)(  )  (     )(   )__)  )    (  )___/ )(__  /(__)!  )(   )__) 
+     |!____) (___/(_____)(_)!_)   (__) (____)(_/!/!_)(__)  (____)(__)(__)(__) (____)
      |
      |
-     |${scala.Console.GREEN}Json-Template ${scalaVersion.value}${scala.Console.RESET}
+     |${scala.Console.GREEN}Json-Template version ${version.value}${scala.Console.RESET}
      |
-     |""".stripMargin
+     |""".stripMargin.replaceAllLiterally("!", "\\")
 
 usefulTasks := Seq(
   UsefulTask("a", "~compile", "Compile with file-watch enabled"),
@@ -46,6 +42,9 @@ lazy val root = project
     version := "0.0.1-SNAPSHOT",
   )
   .settings(libraryDependencies ++= testDependencies)
+  .settings(libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0")
+  .settings(libraryDependencies += "ch.qos.logback" % "logback-core" % "1.2.10")
+  .settings(libraryDependencies += ("com.github.aaronp" %% "eie" % "1.0.0").cross(CrossVersion.for3Use2_13))
   .settings(libraryDependencies ++= List("circe-core", "circe-generic", "circe-parser").map(artifact => "io.circe" %% artifact % "0.14.1"))
 
 
@@ -102,7 +101,6 @@ startDocusaurus := {
   import sys.process._
   val workDir = new java.io.File("site")
   val output  = sys.process.Process(Seq("npx", "docusaurus", "start"), workDir).!!
-//  val output  = sys.process.Process(Seq("npx", "docusaurus", "start")).!!
   java.awt.Desktop.getDesktop.browse(new URI("http://localhost:3000/index.html"))
   sLog.value.info(output)
   output

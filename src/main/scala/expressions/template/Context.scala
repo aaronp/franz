@@ -1,8 +1,7 @@
 package expressions.template
 
-import eie.io._
 import io.circe.{Decoder, Encoder, Json}
-
+import eie.io.*
 import java.nio.file.Path
 import scala.language.dynamics
 

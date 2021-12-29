@@ -8,8 +8,8 @@ import scala.util.Success
 
 class CodeTemplateTest extends BaseTest {
   type JsonMsg = Message[DynamicJson, DynamicJson]
-  "CodeTemplate" should {
-    "work" in {
+  "CodeTemplate.newCache" should {
+    "create a cached compiler which can turn a script into a function" in {
       val template       = CodeTemplate.newCache[JsonMsg, Json]()
       val compiledResult = template("""
           |        import io.circe.syntax._
