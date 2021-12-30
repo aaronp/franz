@@ -2,6 +2,8 @@ val scala3Version = "3.1.0"
 
 ThisBuild / scalaVersion  := scala3Version
 
+import sbt.Credentials
+import sbt.Keys.{credentials, publishTo, test}
 import sbtwelcome._
 
 logo :=
@@ -29,7 +31,6 @@ usefulTasks := Seq(
 
 logoColor := scala.Console.GREEN
 
-
 val testDependencies = List(
   "org.scalatest"          %% "scalatest" % "3.2.10" % Test,
 )
@@ -40,6 +41,18 @@ lazy val root = project
     name := "code-template",
 //    version := "0.0.1-SNAPSHOT",
     fork := true
+  )
+  .settings(
+    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+//    test in assembly := {},
+    credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
+    publishTo := {
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value)
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    }
   )
   .settings(libraryDependencies ++= testDependencies)
   .settings(libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0")
