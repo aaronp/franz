@@ -1,6 +1,6 @@
-package expressions
+package codetemplate
 
-import expressions.CodeTemplate.Expression
+import codetemplate.CodeTemplate.Expression
 import io.circe.Json
 
 import scala.util.Success

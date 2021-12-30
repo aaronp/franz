@@ -1,4 +1,4 @@
-package expressions
+package codetemplate
 
 object Unquote {
   private val UnquoteR        = """ *"(.*)" *""".r

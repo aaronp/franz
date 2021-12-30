@@ -5,8 +5,6 @@
         </encoder>
     </appender>
 
-    <logger level="trace" name="expressions.rest.server" />
-
     <root level="debug">
         <appender-ref ref="STDOUT" />
     </root>

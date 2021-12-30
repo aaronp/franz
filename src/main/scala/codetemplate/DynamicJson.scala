@@ -1,4 +1,4 @@
-package expressions
+package codetemplate
 
 import io.circe.{Decoder, Encoder, Json}
 import scala.language.implicitConversions

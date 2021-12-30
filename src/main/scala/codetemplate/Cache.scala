@@ -1,11 +1,11 @@
-package expressions
+package codetemplate
 
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
 
 /**
-  * A really dumb, lazy cache of expressions
+  * A really dumb, lazy cache of codetemplate
   */
 class Cache[V](create: String => Try[V], default: Try[V] = Failure[V](new IllegalArgumentException("no default provided for empty script"))) {
   private object Lock

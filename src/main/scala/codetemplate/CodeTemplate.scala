@@ -1,4 +1,4 @@
-package expressions
+package codetemplate
 
 import javax.script.{ScriptEngine, ScriptEngineFactory}
 import scala.annotation.nowarn
@@ -30,7 +30,7 @@ object CodeTemplate {
   def newCache[A: ClassTag, B](scriptPrefix: String = ""): Cache[Expression[A, B]] = new Cache[Expression[A, B]](script => apply[A, B](script, scriptPrefix))
 
   /**
-    * We bias these expressions for [[DynamicJson]] inputs
+    * We bias these codetemplate for [[DynamicJson]] inputs
     *
     * @param expression
     * @tparam B
@@ -64,10 +64,9 @@ object CodeTemplate {
 
   def forAnyInput[A, B](contextType: String, expression: String): Try[Expression[A, B]] = {
     val script =
-      s"""import expressions._
-         |import expressions.implicits._
-         |//import AvroExpressions._
-         |import expressions.template.{Context, Message}
+      s"""import codetemplate._
+         |import codetemplate.implicits._
+         |import codetemplate.{Context, Message}
          |
          |(context : Context[${contextType}]) => {
          |  import context._
@@ -107,7 +106,7 @@ object CodeTemplate {
     thunk
   }
 
-  private[expressions] def className[A: ClassTag] = implicitly[ClassTag[A]].runtimeClass match {
+  private[codetemplate] def className[A: ClassTag] = implicitly[ClassTag[A]].runtimeClass match {
     case other if other.isPrimitive => other.getName.capitalize
     case other                      => other.getName
   }

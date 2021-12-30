@@ -1,4 +1,4 @@
-package expressions
+package codetemplate
 
 import eie.io.*
 import io.circe.{Decoder, Encoder, Json}

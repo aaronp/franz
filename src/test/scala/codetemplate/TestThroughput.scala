@@ -1,4 +1,4 @@
-package expressions
+package codetemplate
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 

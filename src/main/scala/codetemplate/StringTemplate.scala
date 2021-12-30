@@ -1,6 +1,6 @@
-package expressions
+package codetemplate
 
-import expressions.CodeTemplate.*
+import codetemplate.CodeTemplate.*
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
@@ -42,7 +42,7 @@ object StringTemplate {
     *
     * @param expression
     * @tparam A
-    * @return a mapping of variable names to their RHS expressions (constants or functions)
+    * @return a mapping of variable names to their RHS codetemplate (constants or functions)
     */
   def apply[K: ClassTag, V: ClassTag](expression: String, scriptPrefix: String = ""): StringExpression[Message[K, V]] = {
     val parts = resolveExpressionVariables(expression, Nil)
@@ -60,7 +60,7 @@ object StringTemplate {
 
   def const[A](value: String): StringExpression[A] = _ => value
 
-  private[expressions] val Moustache = """(.*?)\{\{(.*?)}}(.*)""".r
+  private[codetemplate] val Moustache = """(.*?)\{\{(.*?)}}(.*)""".r
 
   @tailrec
   private def resolveExpressionVariables(remainingExpressionStr: String, expressions: List[String]): List[String] = {
@@ -76,10 +76,8 @@ object StringTemplate {
 
   private def stringAsExpression[A](contextType: String, scriptPrefix: String, parts: Seq[String]): String = {
     val scriptHeader =
-      s"""import expressions._
-         |import expressions.implicits._
-         |import AvroExpressions._
-         |import expressions.template.{Context, Message}
+      s"""import codetemplate._
+         |import codetemplate.implicits._
          |
          |(context : Context[${contextType}]) => {
          |  import context._
