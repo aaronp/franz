@@ -32,14 +32,13 @@ logoColor := scala.Console.GREEN
 
 val testDependencies = List(
   "org.scalatest"          %% "scalatest" % "3.2.10" % Test,
-//  "org.pegdown"            % "pegdown"    % "1.6.0" % Test
 )
 
 lazy val root = project
   .in(file("."))
   .settings(
     name := "code-template",
-    version := "0.0.1-SNAPSHOT",
+//    version := "0.0.1-SNAPSHOT",
     fork := true
   )
   .settings(libraryDependencies ++= testDependencies)
@@ -68,9 +67,6 @@ pomExtra in Global := {
       </developer>
     </developers>
 }
-
-
-
 
 lazy val docs = project       // new documentation project
   .in(file("site")) // important: it must not be docs/
