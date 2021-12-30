@@ -31,9 +31,8 @@ logoColor := scala.Console.GREEN
 
 
 val testDependencies = List(
-  "junit"                  % "junit"      % "4.13.2"  % Test,
   "org.scalatest"          %% "scalatest" % "3.2.10" % Test,
-  "org.pegdown"            % "pegdown"    % "1.6.0" % Test
+//  "org.pegdown"            % "pegdown"    % "1.6.0" % Test
 )
 
 lazy val root = project
@@ -41,6 +40,7 @@ lazy val root = project
   .settings(
     name := "code-template",
     version := "0.0.1-SNAPSHOT",
+    fork := true
   )
   .settings(libraryDependencies ++= testDependencies)
   .settings(libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0")
