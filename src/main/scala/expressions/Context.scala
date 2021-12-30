@@ -1,11 +1,12 @@
-package expressions.template
+package expressions
 
-import io.circe.{Decoder, Encoder, Json}
 import eie.io.*
+import io.circe.{Decoder, Encoder, Json}
+
 import java.nio.file.Path
 import scala.language.dynamics
 
-class FileSystem(val dir: Path) extends AnyVal with Dynamic {
+case class FileSystem(val dir: Path) extends AnyVal with Dynamic {
   def selectDynamic(fieldName: String): String = {
     dir.resolve(fieldName).text
   }
@@ -27,8 +28,8 @@ object Message {
   }
 
   implicit def msgEncoder[K: Encoder, V: Encoder]: Encoder[Message[K, V]] = Encoder[Message[K, V]] { msg =>
-    import io.circe.syntax._
-    import msg._
+    import io.circe.syntax.*
+    import msg.*
     Json.obj(
       "content"   -> Encoder[V].apply(content),
       "key"       -> Encoder[K].apply(key),

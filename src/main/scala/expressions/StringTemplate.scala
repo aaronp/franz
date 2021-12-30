@@ -1,7 +1,6 @@
 package expressions
 
-import expressions.CodeTemplate._
-import expressions.template.Message
+import expressions.CodeTemplate.*
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag

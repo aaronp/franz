@@ -5,15 +5,16 @@ ThisBuild / scalaVersion  := scala3Version
 import sbtwelcome._
 
 logo :=
-  s""" 
+  s"""                _             _                       _       _
+     |               | |           | |                     | |     | |
+     |   ___ ___   __| | ___ ______| |_ ___ _ __ ___  _ __ | | __ _| |_ ___
+     |  / __/ _ ! / _` |/ _ !______| __/ _ ! '_ ` _ !| '_ !| |/ _` | __/ _ !
+     | | (_| (_) | (_| |  __/      | ||  __/ | | | | | |_) | | (_| | ||  __/
+     |  !___!___/ !__,_|!___|       !__!___|_| |_| |_| .__/|_|!__,_|!__!___|
+     |                                               | |
+     |                                               |_|
      |
-     |  ____  ___  _____  _  _    ____  ____  __  __  ____  __      __   ____  ____ 
-     | (_  _)/ __)(  _  )( !( )  (_  _)( ___)(  !/  )(  _ !(  )    /__! (_  _)( ___)
-     |.-_)(  !__ ! )(_)(  )  (     )(   )__)  )    (  )___/ )(__  /(__)!  )(   )__) 
-     |!____) (___/(_____)(_)!_)   (__) (____)(_/!/!_)(__)  (____)(__)(__)(__) (____)
-     |
-     |
-     |${scala.Console.GREEN}Json-Template version ${version.value}${scala.Console.RESET}
+     |${scala.Console.GREEN}Code-Template version ${version.value}${scala.Console.RESET}
      |
      |""".stripMargin.replaceAllLiterally("!", "\\")
 
@@ -38,7 +39,7 @@ val testDependencies = List(
 lazy val root = project
   .in(file("."))
   .settings(
-    name := "json-template",
+    name := "code-template",
     version := "0.0.1-SNAPSHOT",
   )
   .settings(libraryDependencies ++= testDependencies)
@@ -47,26 +48,12 @@ lazy val root = project
   .settings(libraryDependencies += ("com.github.aaronp" %% "eie" % "1.0.0").cross(CrossVersion.for3Use2_13))
   .settings(libraryDependencies ++= List("circe-core", "circe-generic", "circe-parser").map(artifact => "io.circe" %% artifact % "0.14.1"))
 
-
-// lazy val expressions = project
-//   .in(file("expressions"))
-//   .dependsOn(avroRecords % "test->compile")
-//   .settings(name := "expressions", coverageMinimum := 30, coverageFailOnMinimum := true)
-//   .settings(commonSettings: _*)
-//   .settings(libraryDependencies ++= testDependencies)
-//   .settings(libraryDependencies ++= List("circe-core", "circe-generic", "circe-parser").map(artifact => "io.circe" %% artifact % "0.14.1"))
-//   .settings(libraryDependencies += ("com.github.aaronp" %% "eie" % "1.0.0").cross(CrossVersion.for3Use2_13))
-//   .settings(libraryDependencies ++= List(
-//     "org.apache.avro" % "avro"           % "1.10.0",
-//     "org.scala-lang" %% "scala3-staging" % "3.1.0"
-//   ))
-
 // see https://leonard.io/blog/2017/01/an-in-depth-guide-to-deploying-to-maven-central/
 pomIncludeRepository := (_ => false)
 
 // To sync with Maven central, you need to supply the following information:
 pomExtra in Global := {
-  <url>https://github.com/aaronp/json-template</url>
+  <url>https://github.com/aaronp/code-template</url>
     <licenses>
       <license>
         <name>Apache 2</name>
@@ -77,7 +64,7 @@ pomExtra in Global := {
       <developer>
         <id>aaronp</id>
         <name>Aaron Pritzlaff</name>
-        <url>https://github.com/aaronp/json-template</url>
+        <url>https://github.com/aaronp/code-template</url>
       </developer>
     </developers>
 }

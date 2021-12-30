@@ -5,4 +5,4 @@ sidebar_position: 3
 
 # Hello
 
-This is my **third Docusaurus document**!
+This is my **another document**!

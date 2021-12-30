@@ -1,7 +1,5 @@
 package expressions
 
-import expressions.template.Context
-
 import javax.script.{ScriptEngine, ScriptEngineFactory}
 import scala.annotation.nowarn
 import scala.reflect.ClassTag

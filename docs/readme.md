@@ -1,4 +1,4 @@
-# My Project
+# Code Template
 
 To install my project
 ```scala

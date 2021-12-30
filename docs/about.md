@@ -1,8 +1,8 @@
-# JSON Template
+# Code Template
 
 To install my project
 ```scala
-libraryDependencies += "com.github.aaronp" % "json-template" % "@VERSION@"
+libraryDependencies += "com.github.aaronp" % "code-template" % "@VERSION@"
 ```
 
 ```scala mdoc

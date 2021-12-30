@@ -1,6 +1,5 @@
 package expressions
 
-import expressions.template.Message
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
