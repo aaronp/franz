@@ -1,6 +1,7 @@
 val scala3Version = "3.1.0"
 
 ThisBuild / scalaVersion  := scala3Version
+ThisBuild / versionScheme := Some("early-semver")
 
 import sbt.Credentials
 import sbt.Keys.{credentials, publishTo, test}
