@@ -58,7 +58,7 @@ lazy val root = project
   .in(file("."))
   .settings(
     name := "code-template",
-    //fork := true,
+    fork := true,
     packageOptions in (Compile, packageBin) += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown")),
     git.remoteRepo := s"git@github.com:aaronp/code-template.git",
     releasePublishArtifactsAction := PgpKeys.publishSigned.value
