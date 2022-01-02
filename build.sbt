@@ -36,24 +36,26 @@ val testDependencies = List(
   "org.scalatest"          %% "scalatest" % "3.2.10" % Test,
 )
 
+
+ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+ThisBuild / releasePublishArtifactsAction := PgpKeys.publishSigned.value
+ThisBuild / publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+
+ThisBuild / publishMavenStyle := true
+ThisBuild / pomIncludeRepository := (_ => false)
+
 lazy val root = project
   .in(file("."))
   .settings(
     name := "codetemplate",
 //    version := "0.0.1-SNAPSHOT",
     fork := true
-  )
-  .settings(
-    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-//    test in assembly := {},
-    credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
-    publishTo := {
-      val nexus = "https://oss.sonatype.org/"
-      if (isSnapshot.value)
-        Some("snapshots" at nexus + "content/repositories/snapshots")
-      else
-        Some("releases" at nexus + "service/local/staging/deploy/maven2")
-    }
   )
   .settings(libraryDependencies ++= testDependencies)
   .settings(libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0")
@@ -65,7 +67,7 @@ lazy val root = project
 pomIncludeRepository := (_ => false)
 
 // To sync with Maven central, you need to supply the following information:
-pomExtra in Global := {
+Global / pomExtra := {
   <url>https://github.com/aaronp/codetemplate</url>
     <licenses>
       <license>
