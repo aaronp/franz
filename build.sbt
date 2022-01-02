@@ -14,6 +14,7 @@ ThisBuild / releasePublishArtifactsAction := PgpKeys.publishSigned.value
 ThisBuild / publishMavenStyle := true
 ThisBuild / exportJars := false
 ThisBuild / pomIncludeRepository := (_ => false)
+ThisBuild / pushRemoteCacheConfiguration := pushRemoteCacheConfiguration.value.withOverwrite(true)
 ThisBuild / publishTo := {
   val nexus = "https://oss.sonatype.org/"
   if (isSnapshot.value)
