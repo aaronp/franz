@@ -2,6 +2,7 @@ import sbt.Credentials
 import sbt.Keys.{credentials, publishTo, test}
 import sbtwelcome._
 
+ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / organization := "com.github.aaronp"
 ThisBuild / scalaVersion  := "3.1.0"
 ThisBuild / resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
