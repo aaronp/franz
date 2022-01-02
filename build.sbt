@@ -19,7 +19,7 @@ logo :=
      |                                               | |
      |                                               |_|
      |
-     |${scala.Console.GREEN}codetemplate version ${version.value}${scala.Console.RESET}
+     |${scala.Console.GREEN}code-template version ${version.value}${scala.Console.RESET}
      |
      |""".stripMargin.replaceAllLiterally("!", "\\")
 
@@ -55,7 +55,7 @@ ThisBuild / pomIncludeRepository := (_ => false)
 lazy val root = project
   .in(file("."))
   .settings(
-    name := "codetemplate",
+    name := "code-template",
 //    version := "0.0.1-SNAPSHOT",
     fork := true
   )
@@ -70,7 +70,7 @@ pomIncludeRepository := (_ => false)
 
 // To sync with Maven central, you need to supply the following information:
 Global / pomExtra := {
-  <url>https://github.com/aaronp/codetemplate</url>
+  <url>https://github.com/aaronp/code-template</url>
     <licenses>
       <license>
         <name>Apache 2</name>
@@ -81,7 +81,7 @@ Global / pomExtra := {
       <developer>
         <id>aaronp</id>
         <name>Aaron Pritzlaff</name>
-        <url>https://github.com/aaronp/codetemplate</url>
+        <url>https://github.com/aaronp/code-template</url>
       </developer>
     </developers>
 }
