@@ -1,11 +1,6 @@
 # Code Template
 
-To install my project
+To install: 
 ```scala
-libraryDependencies += "com" % "lib" % "@VERSION@"
-```
-
-```scala mdoc
-val x = 1
-List(x, x)
+libraryDependencies += "com.github.aaronp" % "code-template" % "0.1.1"
 ```
