@@ -1,6 +1,8 @@
 val scala3Version = "3.1.0"
 
+ThisBuild / organization := "com.github.aaronp"
 ThisBuild / scalaVersion  := scala3Version
+ThisBuild / resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 //ThisBuild / versionScheme := Some("early-semver")
 
 import sbt.Credentials
