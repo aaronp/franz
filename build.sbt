@@ -17,6 +17,11 @@ ThisBuild / publishTo := {
   else
     Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
+ThisBuild / git.gitTagToVersionNumber := { tag: String =>
+  if (tag matches "v?[0-9]+\\..*") {
+    Some(tag)
+  } else None
+}
 
 //ThisBuild / versionScheme := Some("early-semver")
 
