@@ -1,13 +1,23 @@
-val scala3Version = "3.1.0"
-
-ThisBuild / organization := "com.github.aaronp"
-ThisBuild / scalaVersion  := scala3Version
-ThisBuild / resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-//ThisBuild / versionScheme := Some("early-semver")
-
 import sbt.Credentials
 import sbt.Keys.{credentials, publishTo, test}
 import sbtwelcome._
+
+ThisBuild / organization := "com.github.aaronp"
+ThisBuild / scalaVersion  := "3.1.0"
+ThisBuild / resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+ThisBuild / releasePublishArtifactsAction := PgpKeys.publishSigned.value
+ThisBuild / publishMavenStyle := true
+ThisBuild / pomIncludeRepository := (_ => false)
+ThisBuild / publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+
+//ThisBuild / versionScheme := Some("early-semver")
 
 logo :=
   s"""                _             _                       _       _
@@ -34,32 +44,13 @@ usefulTasks := Seq(
 
 logoColor := scala.Console.GREEN
 
-val testDependencies = List(
-  "org.scalatest"          %% "scalatest" % "3.2.10" % Test,
-)
-
-
-ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
-ThisBuild / releasePublishArtifactsAction := PgpKeys.publishSigned.value
-ThisBuild / publishTo := {
-  val nexus = "https://oss.sonatype.org/"
-  if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
-  else
-    Some("releases" at nexus + "service/local/staging/deploy/maven2")
-}
-
-ThisBuild / publishMavenStyle := true
-ThisBuild / pomIncludeRepository := (_ => false)
-
 lazy val root = project
   .in(file("."))
   .settings(
     name := "code-template",
-//    version := "0.0.1-SNAPSHOT",
     fork := true
   )
-  .settings(libraryDependencies ++= testDependencies)
+  .settings(libraryDependencies += "org.scalatest"  %% "scalatest" % "3.2.10" % Test)
   .settings(libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0")
   .settings(libraryDependencies += "ch.qos.logback" % "logback-core" % "1.2.10")
   .settings(libraryDependencies += ("com.github.aaronp" %% "eie" % "1.0.0").cross(CrossVersion.for3Use2_13))
