@@ -1,6 +1,8 @@
+import com.typesafe.sbt.pgp
 import sbt.Credentials
 import sbt.Keys.{credentials, publishTo, test}
 import sbtwelcome._
+import sbtrelease._
 
 enablePlugins(GitVersioning)
 enablePlugins(GhpagesPlugin)
@@ -86,6 +88,22 @@ ThisBuild / pomExtra := {
         <url>https://github.com/aaronp/code-template</url>
       </developer>
     </developers>
+}
+
+releaseProcess <<= thisProjectRef apply { ref =>
+  import ReleaseStateTransformations._
+  Seq[ReleasePart](
+    initialGitChecks,                       // : ReleasePart
+    checkSnapshotDependencies,              // : ReleasePart
+    inquireVersions,                        // : ReleasePart
+    runTest,                                // : ReleasePart
+    setReleaseVersion,                      // : ReleasePart
+    commitReleaseVersion,                   // : ReleasePart
+    tagRelease,                             // : ReleasePart
+    releaseTask(pgp.PgpKeys.publishSigned in Global in ref),  // : TaskKey refurbished as a ReleasePart
+    setNextVersion,                         // : ReleasePart
+    commitNextVersion                       // : ReleasePart
+  )
 }
 
 lazy val docs = project       // new documentation project
