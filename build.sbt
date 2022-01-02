@@ -59,7 +59,7 @@ lazy val root = project
     //fork := true,
     packageOptions in (Compile, packageBin) += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown")),
     git.remoteRepo := s"git@github.com:aaronp/code-template.git",
-    pushRemoteCacheConfiguration := pushRemoteCacheConfiguration.value.withOverwrite(true)
+    //pushRemoteCacheConfiguration := pushRemoteCacheConfiguration.value.withOverwrite(true)
   )
   .settings(libraryDependencies += "org.scalatest"  %% "scalatest" % "3.2.10" % Test)
   .settings(libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0")
