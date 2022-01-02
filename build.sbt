@@ -27,8 +27,6 @@ ThisBuild / git.gitTagToVersionNumber := { tag: String =>
   } else None
 }
 
-//ThisBuild / versionScheme := Some("early-semver")
-
 logo :=
   s"""                _             _                       _       _
      |               | |           | |                     | |     | |
@@ -58,10 +56,9 @@ lazy val root = project
   .in(file("."))
   .settings(
     name := "code-template",
-    fork := true,
+    //fork := true,
     packageOptions in (Compile, packageBin) += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown")),
     git.remoteRepo := s"git@github.com:aaronp/code-template.git"
-
   )
   .settings(libraryDependencies += "org.scalatest"  %% "scalatest" % "3.2.10" % Test)
   .settings(libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0")
@@ -70,7 +67,6 @@ lazy val root = project
   .settings(libraryDependencies ++= List("circe-core", "circe-generic", "circe-parser").map(artifact => "io.circe" %% artifact % "0.14.1"))
 
 // see https://leonard.io/blog/2017/01/an-in-depth-guide-to-deploying-to-maven-central/
-pomIncludeRepository := (_ => false)
 
 // To sync with Maven central, you need to supply the following information:
 //Global / pomExtra := {
