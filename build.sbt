@@ -8,6 +8,7 @@ ThisBuild / resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/c
 ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 ThisBuild / releasePublishArtifactsAction := PgpKeys.publishSigned.value
 ThisBuild / publishMavenStyle := true
+ThisBuild / exportJars := false
 ThisBuild / pomIncludeRepository := (_ => false)
 ThisBuild / publishTo := {
   val nexus = "https://oss.sonatype.org/"
@@ -48,7 +49,10 @@ lazy val root = project
   .in(file("."))
   .settings(
     name := "code-template",
-    fork := true
+    fork := true,
+    packageOptions in (Compile, packageBin) += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown")),
+    git.remoteRepo := s"git@github.com:aaronp/code-template.git"
+
   )
   .settings(libraryDependencies += "org.scalatest"  %% "scalatest" % "3.2.10" % Test)
   .settings(libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0")
@@ -60,7 +64,8 @@ lazy val root = project
 pomIncludeRepository := (_ => false)
 
 // To sync with Maven central, you need to supply the following information:
-Global / pomExtra := {
+//Global / pomExtra := {
+ThisBuild / pomExtra := {
   <url>https://github.com/aaronp/code-template</url>
     <licenses>
       <license>
