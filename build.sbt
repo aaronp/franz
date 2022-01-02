@@ -6,7 +6,16 @@ import sbtrelease._
 
 enablePlugins(GitVersioning)
 enablePlugins(GhpagesPlugin)
+enablePlugins(PamfletPlugin)
+enablePlugins(SiteScaladocPlugin)
 
+Pamflet / sourceDirectory := sourceDirectory.value / "docs"
+autoAPIMappings := true
+SiteScaladoc / siteSubdirName := "api/latest"
+
+ThisBuild / ghpagesNoJekyll := true
+ThisBuild / scalafmtOnCompile := true
+ThisBuild / scalafmtVersion := "1.4.0"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / organization := "com.github.aaronp"
 ThisBuild / scalaVersion  := "3.1.0"
