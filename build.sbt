@@ -2,6 +2,9 @@ import sbt.Credentials
 import sbt.Keys.{credentials, publishTo, test}
 import sbtwelcome._
 
+enablePlugins(GitVersioning)
+enablePlugins(GhpagesPlugin)
+
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / organization := "com.github.aaronp"
 ThisBuild / scalaVersion  := "3.1.0"
