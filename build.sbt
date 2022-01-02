@@ -61,7 +61,7 @@ lazy val root = project
     //fork := true,
     packageOptions in (Compile, packageBin) += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown")),
     git.remoteRepo := s"git@github.com:aaronp/code-template.git",
-    //pushRemoteCacheConfiguration := pushRemoteCacheConfiguration.value.withOverwrite(true)
+    releasePublishArtifactsAction := PgpKeys.publishSigned.value
   )
   .settings(libraryDependencies += "org.scalatest"  %% "scalatest" % "3.2.10" % Test)
   .settings(libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0")
@@ -88,22 +88,6 @@ ThisBuild / pomExtra := {
         <url>https://github.com/aaronp/code-template</url>
       </developer>
     </developers>
-}
-
-releaseProcess <<= thisProjectRef apply { ref =>
-  import ReleaseStateTransformations._
-  Seq[ReleasePart](
-    initialGitChecks,                       // : ReleasePart
-    checkSnapshotDependencies,              // : ReleasePart
-    inquireVersions,                        // : ReleasePart
-    runTest,                                // : ReleasePart
-    setReleaseVersion,                      // : ReleasePart
-    commitReleaseVersion,                   // : ReleasePart
-    tagRelease,                             // : ReleasePart
-    releaseTask(pgp.PgpKeys.publishSigned in Global in ref),  // : TaskKey refurbished as a ReleasePart
-    setNextVersion,                         // : ReleasePart
-    commitNextVersion                       // : ReleasePart
-  )
 }
 
 lazy val docs = project       // new documentation project
