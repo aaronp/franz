@@ -1,7 +1,7 @@
 val scala3Version = "3.1.0"
 
 ThisBuild / scalaVersion  := scala3Version
-ThisBuild / versionScheme := Some("early-semver")
+//ThisBuild / versionScheme := Some("early-semver")
 
 import sbt.Credentials
 import sbt.Keys.{credentials, publishTo, test}
@@ -17,7 +17,7 @@ logo :=
      |                                               | |
      |                                               |_|
      |
-     |${scala.Console.GREEN}Code-Template version ${version.value}${scala.Console.RESET}
+     |${scala.Console.GREEN}codetemplate version ${version.value}${scala.Console.RESET}
      |
      |""".stripMargin.replaceAllLiterally("!", "\\")
 
@@ -39,7 +39,7 @@ val testDependencies = List(
 lazy val root = project
   .in(file("."))
   .settings(
-    name := "code-template",
+    name := "codetemplate",
 //    version := "0.0.1-SNAPSHOT",
     fork := true
   )
@@ -66,7 +66,7 @@ pomIncludeRepository := (_ => false)
 
 // To sync with Maven central, you need to supply the following information:
 pomExtra in Global := {
-  <url>https://github.com/aaronp/code-template</url>
+  <url>https://github.com/aaronp/codetemplate</url>
     <licenses>
       <license>
         <name>Apache 2</name>
@@ -77,7 +77,7 @@ pomExtra in Global := {
       <developer>
         <id>aaronp</id>
         <name>Aaron Pritzlaff</name>
-        <url>https://github.com/aaronp/code-template</url>
+        <url>https://github.com/aaronp/codetemplate</url>
       </developer>
     </developers>
 }
