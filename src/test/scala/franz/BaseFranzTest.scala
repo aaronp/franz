@@ -6,11 +6,18 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import zio.ZIO
 import zio.duration.{Duration, durationInt}
+import org.scalatest.Tag
 
-abstract class BaseFranzTest extends AnyWordSpec with Matchers with GivenWhenThen with Eventually with ScalaFutures {
+import scala.util.Properties
+
+abstract class BaseFranzTest extends AnyWordSpec with Matchers with GivenWhenThen with Eventually with ScalaFutures { self =>
 
   extension (json: String)
     def jason = io.circe.parser.parse(json).toTry.get
+
+  def ensureLocalKafkaRunning(): Unit = EnsureLocalKafkaRunning()
+
+  object IntegrationTest extends Tag("integrationTest")
 
   given rt: zio.Runtime[zio.ZEnv] = zio.Runtime.default
 

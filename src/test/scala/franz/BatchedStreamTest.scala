@@ -15,7 +15,10 @@ class BatchedStreamTest extends BaseFranzTest {
 
   "BatchedStream" should {
 
-    "read back chunks of data" in {
+    "read back chunks of data" taggedAs (IntegrationTest) in {
+      ensureLocalKafkaRunning()
+      println("ok...")
+
       val topic1 = s"foo${UUID.randomUUID()}"
       val config = FranzConfig.stringKeyAvroValueConfig().withOverrides(s"app.franz.consumer.topic=${topic1}")
       val chunk = Chunk.fromIterable((0 to 100).map { i =>
@@ -48,9 +51,10 @@ class BatchedStreamTest extends BaseFranzTest {
 
   def avroRecord(k: Int): GenericRecord = {
     import io.circe.syntax.*
-    TestData.fromJson(Map(
-      "name" -> "test".asJson,
-      "id" -> k.asJson
-    ).asJson)
+    TestData.fromJson(
+      Map(
+        "name" -> "test".asJson,
+        "id"   -> k.asJson
+      ).asJson)
   }
 }

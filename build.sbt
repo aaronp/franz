@@ -1,48 +1,10 @@
-import com.typesafe.sbt.pgp
 import sbt.Credentials
-import sbt.Keys.{credentials, publishTo, test}
+import sbt.Keys.{credentials, name, publishTo}
 import sbtwelcome._
 
 enablePlugins(GitVersioning)
 
-logoColor := scala.Console.GREEN
-name := "franz"
-parallelExecution := false
-packageOptions in (Compile, packageBin) += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown"))
-git.remoteRepo := s"git@github.com:aaronp/franz.git"
-releasePublishArtifactsAction := PgpKeys.publishSigned.value
-libraryDependencies ++= deps.all
-
-resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-resolvers += "confluent" at "https://packages.confluent.io/maven/"
-
 ThisBuild / scalaVersion := "3.1.0"
-buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion)
-buildInfoPackage := "franz.build"
-autoAPIMappings := true
-ghpagesNoJekyll := true
-scalafmtOnCompile := true
-scalafmtVersion := "1.4.0"
-versionScheme := Some("early-semver")
-organization := "com.github.aaronp"
-resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
-releasePublishArtifactsAction := PgpKeys.publishSigned.value
-publishMavenStyle := true
-exportJars := false
-pomIncludeRepository := (_ => false)
-publishTo := {
-  val nexus = "https://oss.sonatype.org/"
-  if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
-  else
-    Some("releases" at nexus + "service/local/staging/deploy/maven2")
-}
-git.gitTagToVersionNumber := { tag: String =>
-  if (tag matches "v?[0-9]+\\..*") {
-    Some(tag)
-  } else None
-}
 
 logo :=
   s"""
@@ -73,10 +35,62 @@ logo :=
 usefulTasks := Seq(
   UsefulTask("a", "~compile", "Compile with file-watch enabled"),
   UsefulTask("b", "~test", "Test with file-watch enabled"),
-  UsefulTask("c", "release", "Release a new version (assumes you have ~/.sbt/.credentials set up)")
+  UsefulTask("c", "integration-test", "Runs the integration tests"),
+  UsefulTask("d", "release", "Release a new version (assumes you have ~/.sbt/.credentials set up)")
 )
 
-// see https://leonard.io/blog/2017/01/an-in-depth-guide-to-deploying-to-maven-central/
+// sbt command-line shortcut
+addCommandAlias("integration-test", "Integration/testOnly -- -n integrationTest")
+
+lazy val IntegrationTest = config("integration").extend(Test)
+
+lazy val root = (project in file("."))
+  .configs(IntegrationTest)
+  .settings(
+    Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-l", "integrationTest"), // Exclude integration tests by default (in ScalaTest)
+    IntegrationTest / testOptions := Seq.empty // Include integration tests, by nullifying the above option
+  )
+  // Enable integration tests
+  .settings(
+    inConfig(IntegrationTest)(Defaults.testTasks)
+  )
+  .settings(
+    logoColor := scala.Console.GREEN,
+    name := "franz",
+    parallelExecution := false,
+    Compile / packageBin / packageOptions += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown")),
+    git.remoteRepo := s"git@github.com:aaronp/franz.git",
+    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    libraryDependencies ++= deps.all,
+    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    resolvers += "confluent" at "https://packages.confluent.io/maven/",
+    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
+    buildInfoPackage := "franz.build",
+    autoAPIMappings := true,
+    ghpagesNoJekyll := true,
+    scalafmtOnCompile := true,
+    scalafmtVersion := "1.4.0",
+    versionScheme := Some("early-semver"),
+    organization := "com.github.aaronp",
+    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
+    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    publishMavenStyle := true,
+    exportJars := false,
+    pomIncludeRepository := (_ => false),
+    publishTo := {
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value)
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    },
+    git.gitTagToVersionNumber := { tag: String =>
+      if (tag matches "v?[0-9]+\\..*") {
+        Some(tag)
+      } else None
+    }
+  )
 
 // To sync with Maven central, you need to supply the following information:
 //Global / pomExtra := {
