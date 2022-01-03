@@ -2,37 +2,41 @@ import com.typesafe.sbt.pgp
 import sbt.Credentials
 import sbt.Keys.{credentials, publishTo, test}
 import sbtwelcome._
-import sbtrelease._
 
 enablePlugins(GitVersioning)
-enablePlugins(GhpagesPlugin)
-enablePlugins(PamfletPlugin)
-enablePlugins(SiteScaladocPlugin)
 
-Pamflet / sourceDirectory := sourceDirectory.value / "docs"
+logoColor := scala.Console.GREEN
+name := "code-template"
+fork := true
+packageOptions in (Compile, packageBin) += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown"))
+git.remoteRepo := s"git@github.com:aaronp/code-template.git"
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+libraryDependencies += "org.scalatest"  %% "scalatest"      % "3.2.10" % Test
+libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0"
+libraryDependencies += "ch.qos.logback" % "logback-core"    % "1.2.10"
+libraryDependencies += ("com.github.aaronp"                                                            %% "eie"    % "1.0.0").cross(CrossVersion.for3Use2_13)
+libraryDependencies ++= List("circe-core", "circe-generic", "circe-parser").map(artifact => "io.circe" %% artifact % "0.14.1")
 autoAPIMappings := true
-SiteScaladoc / siteSubdirName := "api/latest"
-
-ThisBuild / ghpagesNoJekyll := true
-ThisBuild / scalafmtOnCompile := true
-ThisBuild / scalafmtVersion := "1.4.0"
-ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / organization := "com.github.aaronp"
-ThisBuild / scalaVersion  := "3.1.0"
-ThisBuild / resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-ThisBuild / credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
-ThisBuild / releasePublishArtifactsAction := PgpKeys.publishSigned.value
-ThisBuild / publishMavenStyle := true
-ThisBuild / exportJars := false
-ThisBuild / pomIncludeRepository := (_ => false)
-ThisBuild / publishTo := {
+ghpagesNoJekyll := true
+scalafmtOnCompile := true
+scalafmtVersion := "1.4.0"
+versionScheme := Some("early-semver")
+organization := "com.github.aaronp"
+scalaVersion := "3.1.0"
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+publishMavenStyle := true
+exportJars := false
+pomIncludeRepository := (_ => false)
+publishTo := {
   val nexus = "https://oss.sonatype.org/"
   if (isSnapshot.value)
     Some("snapshots" at nexus + "content/repositories/snapshots")
   else
     Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
-ThisBuild / git.gitTagToVersionNumber := { tag: String =>
+git.gitTagToVersionNumber := { tag: String =>
   if (tag matches "v?[0-9]+\\..*") {
     Some(tag)
   } else None
@@ -54,35 +58,15 @@ logo :=
 
 usefulTasks := Seq(
   UsefulTask("a", "~compile", "Compile with file-watch enabled"),
-  UsefulTask("b", "fmt", "Run scalafmt on the entire project"),
-  UsefulTask("c", "docs/mdoc", "create documentation"),
-  UsefulTask("d", "docs/docusaurusPublishGhpages", "publish documentation"),
-  UsefulTask("e", "publishLocal", "Publish the sbt plugin locally so that you can consume it from a different project"),
-  UsefulTask("f", "startDocusaurus", "Start Docusaurus"),
+  UsefulTask("b", "~test", "Test with file-watch enabled"),
+  UsefulTask("c", "release", "Release a new version (assumes you have ~/.sbt/.credentials set up)")
 )
-
-logoColor := scala.Console.GREEN
-
-lazy val root = project
-  .in(file("."))
-  .settings(
-    name := "code-template",
-    fork := true,
-    packageOptions in (Compile, packageBin) += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown")),
-    git.remoteRepo := s"git@github.com:aaronp/code-template.git",
-    releasePublishArtifactsAction := PgpKeys.publishSigned.value
-  )
-  .settings(libraryDependencies += "org.scalatest"  %% "scalatest" % "3.2.10" % Test)
-  .settings(libraryDependencies += "org.scala-lang" %% "scala3-staging" % "3.1.0")
-  .settings(libraryDependencies += "ch.qos.logback" % "logback-core" % "1.2.10")
-  .settings(libraryDependencies += ("com.github.aaronp" %% "eie" % "1.0.0").cross(CrossVersion.for3Use2_13))
-  .settings(libraryDependencies ++= List("circe-core", "circe-generic", "circe-parser").map(artifact => "io.circe" %% artifact % "0.14.1"))
 
 // see https://leonard.io/blog/2017/01/an-in-depth-guide-to-deploying-to-maven-central/
 
 // To sync with Maven central, you need to supply the following information:
 //Global / pomExtra := {
-ThisBuild / pomExtra := {
+pomExtra := {
   <url>https://github.com/aaronp/code-template</url>
     <licenses>
       <license>
@@ -97,25 +81,4 @@ ThisBuild / pomExtra := {
         <url>https://github.com/aaronp/code-template</url>
       </developer>
     </developers>
-}
-
-lazy val docs = project       // new documentation project
-  .in(file("site")) // important: it must not be docs/
-  .dependsOn(root)
-  .enablePlugins(MdocPlugin, DocusaurusPlugin)
-  .settings(
-    mdocVariables := Map("VERSION" -> version.value),
-    moduleName := "site",
-    mdocOut := baseDirectory.value.toPath.resolve("src/pages").toFile
-  )
-
-lazy val startDocusaurus = taskKey[String]("Builds the client").withRank(KeyRanks.APlusTask)
-
-startDocusaurus := {
-  import sys.process._
-  val workDir = new java.io.File("site")
-  val output  = sys.process.Process(Seq("npx", "docusaurus", "start"), workDir).!!
-  java.awt.Desktop.getDesktop.browse(new URI("http://localhost:3000/index.html"))
-  sLog.value.info(output)
-  output
 }

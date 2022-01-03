@@ -6,6 +6,7 @@ import scala.language.dynamics
 import scala.util.Try
 
 /**
+  * Like circe optics  - pimped dynamic type on top of circe json
   */
 case class DynamicJson(value: Json) extends Dynamic {
 

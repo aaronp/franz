@@ -88,6 +88,7 @@ object CodeTemplate {
     val manager = new javax.script.ScriptEngineManager(getClass().getClassLoader())
     manager.getEngineByName("scala")
   }
+
   def compile[A: ClassTag, B](inputType: String, script: String): Try[Compiled[A, B]] = {
     type Thunk = A => B
 
@@ -96,7 +97,7 @@ object CodeTemplate {
       val result               = engine.eval(script)
 
       result match {
-        case expr: Thunk @nowarn => Try(Compiled(script, inputType, expr))
+        case expr: Thunk => Try(Compiled(script, inputType, expr))
         case other =>
           Failure(new Exception(s"Couldn't parse '$script' as an Expression[$className]: $other"))
       }

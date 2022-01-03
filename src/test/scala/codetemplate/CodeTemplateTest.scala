@@ -3,16 +3,16 @@ package codetemplate
 import codetemplate.CodeTemplate.Expression
 import io.circe.Json
 
-import scala.util.Success
+import scala.util.{Success, Try}
 
 class CodeTemplateTest extends BaseTest {
   type JsonMsg = Message[DynamicJson, DynamicJson]
   "CodeTemplate.newCache" should {
     "create a cached compiler which can turn a script into a function" in {
-      val template       = CodeTemplate.newCache[JsonMsg, Json]()
-      val compiledResult = template("""
-          |        import io.circe.syntax._
-          |
+
+      val template = CodeTemplate.newCache[JsonMsg, Json]("import io.circe.syntax._")
+
+      val compiledResult: Try[Expression[JsonMsg, Json]] = template("""
           |        val requests = record.content.hello.world.flatMap  { json =>
           |          json.nested.map { i =>
           |            val url = s"${json("name").asString}-$i"
@@ -22,7 +22,6 @@ class CodeTemplateTest extends BaseTest {
           |            }
           |          }
           |        }
-          |
           |        requests.asJson
           |""".stripMargin)
 

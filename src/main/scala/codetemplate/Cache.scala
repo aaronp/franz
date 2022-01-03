@@ -5,18 +5,22 @@ import org.slf4j.LoggerFactory
 import scala.util.{Failure, Success, Try}
 
 /**
-  * A really dumb, lazy cache of codetemplate
+  * A very basic cache of some resource [[V]] which an be created based on an input stream
+  *
+  * @param compiler the compiler function - compile some expression into a value of type V
+  * @param default
+  * @tparam V
   */
-class Cache[V](create: String => Try[V], default: Try[V] = Failure[V](new IllegalArgumentException("no default provided for empty script"))) {
+class Cache[V](compiler: String => Try[V], default: Try[V] = Failure[V](new IllegalArgumentException("no default provided for empty script"))) {
   private object Lock
 
   private lazy val logger = LoggerFactory.getLogger(getClass)
   private var thunkByCode = Map[String, V]()
 
-  def map[A](thunk: V => A): Cache[A] = new Cache[A](create.andThen(_.map(thunk)))
+  def map[A](thunk: V => A): Cache[A] = new Cache[A](compiler.andThen(_.map(thunk)))
 
   private def createUnsafe(expression: String): Try[V] = {
-    val result = create(expression)
+    val result = compiler(expression)
 
     logger.debug(s"""Compiling:
         |${expression}
