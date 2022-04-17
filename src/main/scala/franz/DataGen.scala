@@ -1,6 +1,6 @@
 package franz
 
-import io.circe.Json
+import io.circe.{Encoder, Json}
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type.*
 
@@ -11,6 +11,30 @@ import scala.util.Try
   * Code which knows how to create test json from an avro schema
   */
 object DataGen {
+
+  /**
+    * @return a list of json values representing some test data in the (json) shape of 'A'
+    */
+  def repeatFromTemplate[A: Encoder](value: A, num: Int, initialSeed: Seed = Seed()): Seq[Json] = {
+    if num < 1 then Nil
+    else {
+      val jason       = Encoder[A].apply(value)
+      val schema      = SchemaGen(jason)
+      val (s1, first) = recordForSchema(schema, initialSeed)
+      val (list, _) = (0 until num).foldLeft(List(first) -> s1) {
+        case ((list, s), _) =>
+          val (nextSeed, next) = recordForSchema(schema, s)
+          (next +: list, nextSeed)
+      }
+      list
+    }
+  }
+
+  def apply[A: Encoder](value: A, seed: Seed = Seed()): Json = {
+    val jason  = Encoder[A].apply(value)
+    val schema = SchemaGen(jason)
+    recordForSchema(schema, seed)._2
+  }
 
   import scala.jdk.CollectionConverters.{*, given}
 
@@ -42,24 +66,28 @@ object DataGen {
 
   def forSchema(schema: Schema, seed: Long = System.currentTimeMillis()): Json = recordForSchema(schema, Seed(seed))._2
 
+  /**
+    *
+    * @param schema the avro schema
+    * @param seed the initial seed used for 'random' values
+    * @param gen the generator (state monad for FP randomness (so we can have FP 'random' values - e.g. they're consistent))
+    * @return the seed (which can be ignored/dropped) and some test data
+    */
   def recordForSchema(schema: Schema, seed: Seed = Seed(), gen: Seed => (Seed, Gen) = Gen.forSeed): (Seed, Json) = {
     schema.getType match {
       case RECORD =>
-        val pear = schema.getFields.asScala.foldLeft(seed -> List[(String, Json)]()) {
+        val (s, pears) = schema.getFields.asScala.foldLeft(seed -> List[(String, Json)]()) {
           case ((s, fields), field) =>
             val (next, json) = recordForSchema(field.schema(), s, gen)
             (next, (field.name(), json) :: fields)
         }
-        pear.map { fields =>
-          Json.obj(fields.toArray *)
-        }
-
+        s -> Json.obj(pears.toArray *)
       case ENUM =>
         val symbols = schema.getEnumSymbols
         val size    = symbols.size()
         val index   = seed.int(size - 1)
         val s       = symbols.get(index)
-        seed -> Json.fromString(s)
+        seed.next -> Json.fromString(s)
       case ARRAY =>
         val (newSeed1, a) = recordForSchema(schema.getElementType, seed, gen)
         val (newSeed2, b) = recordForSchema(schema.getElementType, newSeed1, gen)
@@ -81,7 +109,7 @@ object DataGen {
       case FLOAT   => gen(seed).map((g: Gen) => Json.fromFloat(g.float).getOrElse(Json.fromLong(g.long)))
       case DOUBLE  => gen(seed).map((g: Gen) => Json.fromDouble(g.double).getOrElse(Json.fromLong(g.long)))
       case BOOLEAN => gen(seed).map((g: Gen) => Json.fromBoolean(g.bool))
-      case NULL    => (seed, Json.Null)
+      case NULL    => (seed.next, Json.Null)
     }
   }
 }

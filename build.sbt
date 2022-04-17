@@ -4,7 +4,7 @@ import sbtwelcome._
 
 enablePlugins(GitVersioning)
 
-ThisBuild / scalaVersion := "3.1.0"
+ThisBuild / scalaVersion := "3.1.2"
 
 logo :=
   s"""
@@ -57,6 +57,7 @@ lazy val root = (project in file("."))
   .settings(
     logoColor := scala.Console.GREEN,
     name := "franz",
+//    scalacOptions += "-Yexplicit-nulls",
     parallelExecution := false,
     Compile / packageBin / packageOptions += Package.ManifestAttributes("git-sha" -> git.gitHeadCommit.value.getOrElse("unknown")),
     git.remoteRepo := s"git@github.com:aaronp/franz.git",
