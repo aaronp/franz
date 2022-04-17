@@ -9,14 +9,15 @@ import io.confluent.kafka.serializers.{KafkaAvroDeserializer, KafkaAvroSerialize
 import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.serialization.*
 import org.slf4j.LoggerFactory
-import zio.blocking.Blocking
 import zio.kafka.consumer.Consumer.{AutoOffsetStrategy, OffsetRetrieval}
 import zio.kafka.consumer.{ConsumerSettings, Subscription}
 import zio.kafka.producer.{Producer, ProducerSettings}
 import zio.kafka.serde
 import zio.kafka.serde.Serde
-import zio.{RIO, RManaged, Task, ZIO, ZManaged}
+import zio.{RIO, Task, ZIO}
 import codetemplate.DynamicJson
+import zio.managed.RManaged
+
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
 import scala.reflect.ClassTag
@@ -178,7 +179,9 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
 
   def valueSerde[V](valueConfig: Config = consumerConfig.getConfig("value")): Task[Serde[Any, V]] = serdeFor[V](valueConfig, false)
 
-  def producer: RManaged[Blocking, Producer] = Producer.make(producerSettings)
+  def producer = Producer.make(producerSettings)
+
+  def f = ZIO.blocking(???)
 
   def batchedStream = BatchedStream(this)
 

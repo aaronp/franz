@@ -5,8 +5,9 @@ import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import zio.ZIO
-import zio.duration.{Duration, durationInt}
+//import zio.duration.{Duration, durationInt}
 import org.scalatest.Tag
+import concurrent.duration.*
 
 import scala.util.Properties
 
@@ -19,14 +20,14 @@ abstract class BaseFranzTest extends AnyWordSpec with Matchers with GivenWhenThe
 
   object IntegrationTest extends Tag("integrationTest")
 
-  given rt: zio.Runtime[zio.ZEnv] = zio.Runtime.default
+//  given rt: zio.Runtime[zio.ZEnv] = zio.Runtime.default
 
-  def zenv: zio.ZEnv = rt.environment
+//  def zenv: zio.ZEnv = rt.environment
 
   def testTimeout: Duration = 30.seconds
 
   def shortTimeoutJava: Duration = 200.millis
 
   extension [A](zio: => ZIO[_root_.zio.ZEnv, Any, A])(using rt: _root_.zio.Runtime[_root_.zio.ZEnv])
-    def value(): A = rt.unsafeRun(zio.timeout(testTimeout)).getOrElse(sys.error("Test timeout"))
+    def value(): A = rt.unsafeRun(zio.timeout(java.time.Duration.ofMillis(testTimeout.toMillis))).getOrElse(sys.error("Test timeout"))
 }

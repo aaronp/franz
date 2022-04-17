@@ -1,5 +1,6 @@
 package franz
 
+import codetemplate.DynamicJson
 import com.typesafe.config.Config
 import io.circe.Json
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient
@@ -9,19 +10,16 @@ import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.serialization.{Deserializer, Serdes, Serializer}
 import org.slf4j.LoggerFactory
-import zio.{RIO, Task, ZIO}
 import zio.kafka.serde
 import zio.kafka.serde.Serde
-import codetemplate.DynamicJson
-import scala.util.control.NonFatal
+import zio.{RIO, Task, ZIO}
+
 import java.util.Base64
 import scala.jdk.CollectionConverters.*
+import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
-import codetemplate.DynamicJson
 
 object SerdeSupport {
-
-  private val logger = LoggerFactory.getLogger(getClass)
 
   def avroAsJsonSerde(schemaRegistryClient: SchemaRegistryClient, properties: Map[String, Any], namespace: String, isKey: Boolean): Serde[Any, DynamicJson] = {
     val d     = AvroAsJsonDeserializer(properties, isKey)
@@ -34,10 +32,13 @@ object SerdeSupport {
   case class AvroAsJsonDeserializer(properties: Map[String, Any], isKey: Boolean) extends serde.Deserializer[Any, Json] {
     private val avroDer = new io.confluent.kafka.serializers.KafkaAvroDeserializer
     avroDer.configure(properties.asJava, isKey)
+
     override def deserialize(topic: String, headers: Headers, data: Array[Byte]): RIO[Any, Json] = {
       avroDer.deserialize(topic, headers, data) match {
-        case record: GenericRecord => RIO(GenericRecordToJson(record))
-        case other                 => RIO.fail(new Exception(s"Deserialised data:>${Base64.getEncoder.encodeToString(data)}< as $other, when GenericRecord was expected"))
+        case record: GenericRecord =>
+          //RIO(GenericRecordToJson(record))
+          ???
+        case other => RIO.fail(new Exception(s"Deserialized data:>${Base64.getEncoder.encodeToString(data)}< as $other, when GenericRecord was expected"))
       }
     }
   }
@@ -46,29 +47,28 @@ object SerdeSupport {
       extends serde.Serializer[Any, Json] {
     private val avroSer = new KafkaAvroSerializer(client, properties.asJava)
     avroSer.configure(properties.asJava, isKey)
+
     override def serialize(topic: String, headers: Headers, value: Json): RIO[Any, Array[Byte]] = {
-      RIO {
-        val avroRecord: GenericRecord = SchemaGen.recordForJson(value, namespace)
-        avroSer.serialize(topic, headers, avroRecord)
-      }
+      //      RIO {
+      //        val avroRecord: GenericRecord = SchemaGen.recordForJson(value, namespace)
+      //        avroSer.serialize(topic, headers, avroRecord)
+      //      }
+      ???
     }
   }
 }
 
 private[franz] final case class SerdeSupport(config: FranzConfig) {
-  import config.*
 
-//  def serdeFor[A](serdeConfig: Config, supportedType: SupportedType[A], isKey: Boolean): Task[Serde[Any, A]] = {
-//    serdeFor[A](serdeConfig, isKey)
-//  }
+  import config.*
 
   def serdeFor[A](serdeConfig: Config, isKey: Boolean): Task[Serde[Any, A]] = {
     val deserializerName = serdeConfig.getString("deserializer")
     val serializerName   = serdeConfig.getString("serializer")
 
     deserializerName.toLowerCase match {
-      case "string" | "strings" => Task(Serde.string.asInstanceOf[Serde[Any, A]])
-      case "long" | "longs"     => Task(Serde.long.asInstanceOf[Serde[Any, A]])
+      //      case "string" | "strings" => Task.apply(Serde.string.asInstanceOf[Serde[Any, A]])
+      //      case "long" | "longs"     => Task(Serde.long.asInstanceOf[Serde[Any, A]])
       case _ =>
         val kafkaDeserializer: Deserializer[A] = instantiate[Deserializer[A]](deserializerName)
         val kafkaSerializer: Serializer[A]     = instantiate[Serializer[A]](serializerName)
@@ -81,21 +81,22 @@ private[franz] final case class SerdeSupport(config: FranzConfig) {
           val d = deserializer.asTry.map {
             case Success(ok) => ok
             case Failure(err) =>
-              LoggerFactory.getLogger(getClass).error(s"Deserialise failed with ${err}", err)
+              LoggerFactory.getLogger(getClass).error(s"Deserialize failed with $err", err)
               throw err
           }
           val s = new serde.Serializer[Any, A] {
             override def serialize(topic: String, headers: Headers, value: A): RIO[Any, Array[Byte]] = {
               try {
                 serializer.serialize(topic, headers, value).catchAll { err =>
-                  LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize threw ${err}", err)
-                  ZIO(
-                    LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize threw ${err}", err)
-                  ) *> ZIO.fail(err)
+                  LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize threw $err", err)
+                  //                  ZIO(
+                  //                    LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize threw $err", err)
+                  //                  ) *> ZIO.fail(err)
+                  ???
                 }
               } catch {
-                case err =>
-                  LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize failed with ${err}", err)
+                case err: Throwable =>
+                  LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize failed with $err", err)
                   throw err
               }
             }

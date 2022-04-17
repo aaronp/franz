@@ -45,15 +45,16 @@ object DataGen {
   def recordForSchema(schema: Schema, seed: Seed = Seed(), gen: Seed => (Seed, Gen) = Gen.forSeed): (Seed, Json) = {
     schema.getType match {
       case RECORD =>
-        val pear = schema.getFields.asScala.foldLeft(seed -> List[(String, Json)]()) {
-          case ((s, fields), field) =>
-            val (next, json) = recordForSchema(field.schema(), s, gen)
-            (next, (field.name(), json) :: fields)
-        }
-        pear.map { fields =>
-          Json.obj(fields.toArray *)
-        }
+//        val pear = schema.getFields.asScala.foldLeft(seed -> List[(String, Json)]()) {
+//          case ((s, fields), field) =>
+//            val (next, json) = recordForSchema(field.schema(), s, gen)
+//            (next, (field.name(), json) :: fields)
+//        }
+//        pear.map { fields =>
+//          Json.obj(fields.toArray *)
+//        }
 
+        ???
       case ENUM =>
         val symbols = schema.getEnumSymbols
         val size    = symbols.size()
