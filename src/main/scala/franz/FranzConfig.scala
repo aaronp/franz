@@ -181,8 +181,6 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
 
   def producer = Producer.make(producerSettings)
 
-  def f = ZIO.blocking(???)
-
   def batchedStream = BatchedStream(this)
 
   private def baseUrls = consumerConfig.asList("schema.registry.url").asJava
@@ -200,7 +198,9 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
     * @return
     */
   private def serdeFor[A](serdeConfig: Config, isKey: Boolean): Task[Serde[Any, A]] =
-    SerdeSupport(this).serdeFor[A](serdeConfig, isKey)
+    serdeSupport.serdeFor[A](serdeConfig, isKey)
+
+  def serdeSupport = SerdeSupport(this)
 
   def consumerNamespace = franzConfig.getString("consumer.namespace") match {
     case "<random>" => randomValue

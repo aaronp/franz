@@ -2,6 +2,7 @@ package franz
 
 import codetemplate.DynamicJson
 import com.typesafe.config.Config
+import franz.SerdeSupport.getClass
 import io.circe.Json
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient
 import io.confluent.kafka.serializers.KafkaAvroSerializer
@@ -56,9 +57,10 @@ object SerdeSupport {
       ???
     }
   }
+
 }
 
-private[franz] final case class SerdeSupport(config: FranzConfig) {
+final case class SerdeSupport(config: FranzConfig) {
 
   import config.*
 
@@ -73,36 +75,47 @@ private[franz] final case class SerdeSupport(config: FranzConfig) {
         val kafkaDeserializer: Deserializer[A] = instantiate[Deserializer[A]](deserializerName)
         val kafkaSerializer: Serializer[A]     = instantiate[Serializer[A]](serializerName)
 
-        for {
-          deserializer: serde.Deserializer[Any, A] <- zio.kafka.serde.Deserializer
-            .fromKafkaDeserializer[A](kafkaDeserializer, consumerSettings.properties, isKey)
-          serializer: serde.Serializer[Any, A] <- zio.kafka.serde.Serializer.fromKafkaSerializer[A](kafkaSerializer, consumerSettings.properties, isKey)
-        } yield {
-          val d = deserializer.asTry.map {
-            case Success(ok) => ok
-            case Failure(err) =>
-              LoggerFactory.getLogger(getClass).error(s"Deserialize failed with $err", err)
+        asSerde(kafkaDeserializer, kafkaSerializer, isKey)
+    }
+  }
+
+  def avroSerde(isKey: Boolean = false): Task[Serde[Any, Object]] = {
+    asSerde(
+      io.confluent.kafka.serializers.KafkaAvroDeserializer(schemaRegistryClient),
+      io.confluent.kafka.serializers.KafkaAvroSerializer(schemaRegistryClient),
+      isKey
+    )
+  }
+
+  def asSerde[A](kafkaDeserializer: Deserializer[A], kafkaSerializer: Serializer[A], isKey: Boolean = false): Task[Serde[Any, A]] = {
+    for {
+      deserializer: serde.Deserializer[Any, A] <- zio.kafka.serde.Deserializer
+        .fromKafkaDeserializer[A](kafkaDeserializer, consumerSettings.properties, isKey)
+      serializer: serde.Serializer[Any, A] <- zio.kafka.serde.Serializer.fromKafkaSerializer[A](kafkaSerializer, consumerSettings.properties, isKey)
+    } yield {
+      val d = deserializer.asTry.map {
+        case Success(ok) => ok
+        case Failure(err) =>
+          LoggerFactory.getLogger(getClass).error(s"Deserialize failed with $err", err)
+          throw err
+      }
+      val s = new serde.Serializer[Any, A] {
+        override def serialize(topic: String, headers: Headers, value: A): RIO[Any, Array[Byte]] = {
+          try {
+            serializer.serialize(topic, headers, value).catchAll { err =>
+              LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize threw $err", err)
+              ZIO.attempt(
+                LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize threw $err", err)
+              ) *> ZIO.fail(err)
+            }
+          } catch {
+            case err: Throwable =>
+              LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize failed with $err", err)
               throw err
           }
-          val s = new serde.Serializer[Any, A] {
-            override def serialize(topic: String, headers: Headers, value: A): RIO[Any, Array[Byte]] = {
-              try {
-                serializer.serialize(topic, headers, value).catchAll { err =>
-                  LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize threw $err", err)
-                  //                  ZIO(
-                  //                    LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize threw $err", err)
-                  //                  ) *> ZIO.fail(err)
-                  ???
-                }
-              } catch {
-                case err: Throwable =>
-                  LoggerFactory.getLogger(classOf[FranzConfig]).error(s"serializer.serialize failed with $err", err)
-                  throw err
-              }
-            }
-          }
-          Serde[Any, A](d)(s)
         }
+      }
+      Serde[Any, A](d)(s)
     }
   }
 }
