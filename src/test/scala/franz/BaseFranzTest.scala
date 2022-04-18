@@ -4,7 +4,7 @@ import org.scalatest.GivenWhenThen
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import zio.ZIO
+import zio.{Task, ZIO, ZTraceElement}
 //import zio.duration.{Duration, durationInt}
 import org.scalatest.Tag
 import concurrent.duration.*
@@ -20,7 +20,7 @@ abstract class BaseFranzTest extends AnyWordSpec with Matchers with GivenWhenThe
 
   object IntegrationTest extends Tag("integrationTest")
 
-//  given rt: zio.Runtime[zio.ZEnv] = zio.Runtime.default
+  given rt: zio.Runtime[Any] = zio.Runtime.global
 
 //  def zenv: zio.ZEnv = rt.environment
 
@@ -30,4 +30,10 @@ abstract class BaseFranzTest extends AnyWordSpec with Matchers with GivenWhenThe
 
   extension [A](zio: => ZIO[_root_.zio.ZEnv, Any, A])(using rt: _root_.zio.Runtime[_root_.zio.ZEnv])
     def value(): A = rt.unsafeRun(zio.timeout(java.time.Duration.ofMillis(testTimeout.toMillis))).getOrElse(sys.error("Test timeout"))
+
+  extension [A](zio: => Task[A])(using rt: _root_.zio.Runtime[_root_.zio.ZEnv])
+    def taskValue(): A = rt.unsafeRun(zio.timeout(java.time.Duration.ofMillis(testTimeout.toMillis))).getOrElse(sys.error("Test timeout"))
+
+
+  def run[A](zio: => Task[A])(using rt: _root_.zio.Runtime[Any], trace: ZTraceElement): A = rt.unsafeRun(zio.timeout(java.time.Duration.ofMillis(testTimeout.toMillis))).getOrElse(sys.error("Test timeout"))
 }

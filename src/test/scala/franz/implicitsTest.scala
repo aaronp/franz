@@ -8,8 +8,6 @@ class implicitsTest extends BaseFranzTest {
   "implicits" should {
     "as 'asString' to any supported type" in {
       2.asString shouldBe "2"
-      val p = Producers()
-      p.stringAvro()
 
     }
   }
