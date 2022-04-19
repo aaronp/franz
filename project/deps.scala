@@ -27,7 +27,6 @@ object deps {
     // aaron stack
     dockerEnv,
     "com.github.aaronp" %% "args4c" % "1.0.1",
-//    "com.github.aaronp" %% "eie" % "2.0.1",
     "com.github.aaronp" %% "code-template" % "1.0.0",
     // config
     "com.typesafe" % "config" % "1.4.2",

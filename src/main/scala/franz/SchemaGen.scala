@@ -1,6 +1,6 @@
 package franz
 
-import io.circe.{Json, JsonNumber}
+import io.circe.{Encoder, Json, JsonNumber}
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type.*
 import org.apache.avro.Schema.{Field, Type}
@@ -14,6 +14,14 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
 object SchemaGen {
+
+  extension [A : Encoder](data : A)
+    def asAvro(namespace : String = "namespace"): GenericRecord = recordForJson(Encoder[A].apply(data), namespace)
+
+  extension (jason : String)
+    def parseAsJsonTry: Try[Json] = io.circe.parser.parse(jason).toTry
+    def parseAsJson: Json = parseAsJsonTry.get
+    def parseAsAvro(namespace : String = "namespace"): GenericRecord = parseAsJson.asAvro(namespace)
 
   def parseSchema(schemaText: String): Try[Schema] = {
     val parser = new org.apache.avro.Schema.Parser

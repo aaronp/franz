@@ -36,18 +36,7 @@ final case class Producers(config: FranzConfig = FranzConfig()) {
     task.map(_.asInstanceOf[Serde[Any, X]])
   }
 
-  //  def serdeForValue[X <: Supported]: Task[Serde[Any, Supported]] = {
-  //    X match {
-  //      case Int           => Task.succeed(Serde.int)
-  //      case Long          => Task.succeed(Serde.long)
-  //      case Json          => Task.succeed(Serde.string.inmap[Json](parse)(_.noSpaces))
-  //      case IndexedRecord => avroSerde
-  //      case String        => Task.succeed(Serde.string)
-  //      case ByteBuffer    => Task.succeed(Serde.byteBuffer)
-  //    }
-  //  }
-
-  def publish[K <: Supported, V <: Supported](key: K, value: V, topic: String | Null = null) = {
+  def publish[K <: Supported, V <: Supported](key: K, value: V, topic: String | Null = null) : ZIO[Scope, Throwable, RecordMetadata] = {
     val mainTopic = Option(topic).getOrElse(config.topic)
     for {
       producer: Producer <- instance
