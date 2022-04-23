@@ -17,14 +17,14 @@ object implicits {
 
   def asJson(record: IndexedRecord) = GenericRecordToJson(record)
 
-  extension (value: Supported) {
+  extension(value: Supported) {
 
     def asString = value match {
-      case x: Int => x.toString
-      case x: Long => x.toString
-      case x: Json => x.noSpaces
+      case x: Int           => x.toString
+      case x: Long          => x.toString
+      case x: Json          => x.noSpaces
       case x: IndexedRecord => asJson(x).noSpaces
-      case x: String => x
+      case x: String        => x
     }
   }
 

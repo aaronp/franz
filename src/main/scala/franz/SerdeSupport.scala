@@ -1,6 +1,5 @@
 package franz
 
-import codetemplate.DynamicJson
 import com.typesafe.config.Config
 import franz.SerdeSupport.getClass
 import io.circe.Json
@@ -26,7 +25,7 @@ object SerdeSupport {
     val d     = AvroAsJsonDeserializer(properties, isKey)
     val s     = AvroAsJsonSerializer(schemaRegistryClient, properties, isKey, namespace)
     val serde = zio.kafka.serde.Serde.apply(d)(s)
-    serde.inmap[DynamicJson](DynamicJson.apply)(_.value)
+    serde.inmap[DynamicJson](DynamicJson.apply)(_.underlyingJson)
   }
 
   // read from any Avro topic and squirt it out as Json

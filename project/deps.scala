@@ -4,9 +4,9 @@ object deps {
   def zioVersion = "2.0.0-RC5"
 
   def dockerEnv = ("com.github.aaronp" %% "dockerenv" % "0.6.0" % Test).cross(CrossVersion.for3Use2_13)
-      .exclude("com.typesafe.scala-logging", "scala-logging")
-      .exclude("com.typesafe.scala-logging", "scala-logging_2.13")
-      .exclude("com.github.mpilquist", "simulacrum")
+    .exclude("com.typesafe.scala-logging", "scala-logging")
+    .exclude("com.typesafe.scala-logging", "scala-logging_2.13")
+    .exclude("com.github.mpilquist", "simulacrum")
 
   def typesafeConfig: ModuleID = "com.typesafe" % "config" % "1.4.2"
 
@@ -27,7 +27,8 @@ object deps {
     // aaron stack
     dockerEnv,
     "com.github.aaronp" %% "args4c" % "1.0.1",
-    "com.github.aaronp" %% "code-template" % "1.0.0",
+    "com.github.aaronp" %% "eie" % "2.0.1",
+
     // config
     "com.typesafe" % "config" % "1.4.2",
     // zio
@@ -44,9 +45,9 @@ object deps {
     // avro
     "org.apache.avro" % "avro" % "1.11.0",
     // kafka
-    "dev.zio"           %% "zio-streams"             % zioVersion,
-    "dev.zio"           %% "zio-kafka"               % "2.0.0-M3",
-    ("io.confluent"      % "kafka-streams-avro-serde" % "6.2.1")
+    "dev.zio" %% "zio-streams" % zioVersion,
+    "dev.zio" %% "zio-kafka" % "2.0.0-M3",
+    ("io.confluent" % "kafka-streams-avro-serde" % "6.2.1")
       .exclude("org.apache.kafka", "kafka-clients"),
   )
 }

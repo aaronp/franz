@@ -1,6 +1,5 @@
 package franz
 
-import codetemplate.DynamicJson
 import franz.Deserializers.getClass
 import io.circe.Json
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient
@@ -29,15 +28,16 @@ object Deserializers {
       val instance = new Deserializer[Any, DynamicJson] {
         val logger = LoggerFactory.getLogger(getClass)
 
-        override def deserialize(topic: String, headers: Headers, data: Array[Byte]) = {
-          val src = classOf[org.apache.kafka.clients.consumer.ConsumerRecord[_,_]].getProtectionDomain.getCodeSource.getLocation
-          logger.info(s"FRANZ: trying avro on '$topic' (isKey: $isKey)  w/ ${data.length} bytes; ${headers}, src: $src")
+        override def deserialize(topic: String, headers: Headers, dataInput: Array[Byte]) = {
+          val data: Array[Byte] = Option(dataInput).getOrElse(Array.empty)
+          val src = classOf[org.apache.kafka.clients.consumer.ConsumerRecord[_, _]].getProtectionDomain.getCodeSource.getLocation
+          logger.debug(s"trying avro on '$topic' (isKey: $isKey)  w/ ${data.length} bytes; ${headers}, src: $src")
           fromAvro.deserialize(topic, headers, data).sandbox.either.flatMap {
             case Left(err) =>
               logger.error(s"Deserialize on '${topic}' (isKey: $isKey) failed with $err", err)
               ZIO.fail(err.squash)
             case Right(result) =>
-              logger.info(s"FRANZ: read from '$topic' (isKey: $isKey) : $result")
+              logger.debug(s"FRANZ: read from '$topic' (isKey: $isKey) : $result")
               ZIO.succeed(result)
           }
         }

@@ -12,7 +12,7 @@ import zio.{RIO, Scope, Task, ZIO}
 import java.nio.ByteBuffer
 
 object DynamicProducer {
-  type Supported = Int | Long | Json | IndexedRecord | String | ByteBuffer
+  type Supported = Int | Long | DynamicJson | Json | IndexedRecord | String | ByteBuffer
 }
 
 final case class DynamicProducer(producerConfig: FranzConfig = FranzConfig()) {
@@ -26,14 +26,32 @@ final case class DynamicProducer(producerConfig: FranzConfig = FranzConfig()) {
 
   private def serdeForValue[X <: Supported](isKey: Boolean, value: X): Task[Serde[Any, X]] = {
     val task = value match {
-      case _: Int           => Task.succeed(Serde.int)
-      case _: Long          => Task.succeed(Serde.long)
-      case _: Json          => Task.succeed(Serde.string.inmap[Json](parse)(_.noSpaces))
+      case _: Int  => Task.succeed(Serde.int)
+      case _: Long => Task.succeed(Serde.long)
+      case _: Json =>
+        Task.succeed(Serde.string.inmap[Json](parse) {
+          case null => ""
+          case a    => a.noSpaces
+        })
+      case _: DynamicJson =>
+        Task.succeed(Serde.string.inmap[DynamicJson](parse.andThen(DynamicJson.apply)) {
+          case null => ""
+          case a    => a.underlyingJson.noSpaces
+        })
       case _: IndexedRecord => avroSerde(isKey)
       case _: String        => Task.succeed(Serde.string)
       case _: ByteBuffer    => Task.succeed(Serde.byteBuffer)
     }
     task.map(_.asInstanceOf[Serde[Any, X]])
+  }
+
+  def publishValue[V <: Supported](value: V, topic: String | Null = null): ZIO[Scope, Throwable, RecordMetadata] = {
+    val mainTopic = Option(topic).getOrElse(producerConfig.topic)
+    for {
+      producer: Producer <- instance
+      valueSerde         <- serdeForValue[V](false, value)
+      r                  <- producer.produce(ProducerRecord(mainTopic, value), valueSerde, valueSerde)
+    } yield r
   }
 
   def publish[K <: Supported, V <: Supported](key: K, value: V, topic: String | Null = null): ZIO[Scope, Throwable, RecordMetadata] = {
