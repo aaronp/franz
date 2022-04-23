@@ -18,6 +18,9 @@ object SchemaGen {
   extension [A : Encoder](data : A)
     def asAvro(namespace : String = "namespace"): GenericRecord = recordForJson(Encoder[A].apply(data), namespace)
 
+  /**
+    * extensions for a string which is expected to be in json format
+    */
   extension (jason : String)
     def parseAsJsonTry: Try[Json] = io.circe.parser.parse(jason).toTry
     def parseAsJson: Json = parseAsJsonTry.get

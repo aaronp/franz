@@ -36,7 +36,7 @@ final case class Producers(config: FranzConfig = FranzConfig()) {
     task.map(_.asInstanceOf[Serde[Any, X]])
   }
 
-  def publish[K <: Supported, V <: Supported](key: K, value: V, topic: String | Null = null) : ZIO[Scope, Throwable, RecordMetadata] = {
+  def publish[K <: Supported, V <: Supported](key: K, value: V, topic: String | Null = null): ZIO[Scope, Throwable, RecordMetadata] = {
     val mainTopic = Option(topic).getOrElse(config.topic)
     for {
       producer: Producer <- instance

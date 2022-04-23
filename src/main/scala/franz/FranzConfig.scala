@@ -135,6 +135,8 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
     case id         => id
   }
 
+  def deserializer(isKey: Boolean): Task[serde.Deserializer[Any, DynamicJson]] = Deserializers(schemaRegistryClient, consumerSettings.properties, isKey)
+
   lazy val consumerSettings: ConsumerSettings = {
     val offset = consumerConfig.getString("offset") match {
       case "earliest" => OffsetRetrieval.Auto(AutoOffsetStrategy.Earliest)
@@ -154,22 +156,6 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
     ProducerSettings(producerConfig.asList("bootstrap.servers"))
       .withProperties(map.toSeq: _*)
   }
-
-  def consumerKeyType: SupportedType[_] = keyType(consumerConfig.getConfig("key"))
-
-  def consumerKeySerde[K]: Task[Serde[Any, K]] = keySerde[K]()
-
-  def consumerValueType: SupportedType[_] = valueType(consumerConfig.getConfig("value"))
-
-  def consumerValueSerde[V]: Task[Serde[Any, V]] = valueSerde[V]()
-
-  def producerKeyType: SupportedType[_] = typeOf(producerConfig.getConfig("key"), producerNamespace)
-
-  def producerKeySerde[K]: Task[Serde[Any, K]] = keySerde[K]()
-
-  def producerValueType: SupportedType[_] = typeOf(producerConfig.getConfig("value"), producerNamespace)
-
-  def producerValueSerde[V]: Task[Serde[Any, V]] = valueSerde[V]()
 
   def keyType(keyConfig: Config = consumerConfig.getConfig("key")): SupportedType[_] = typeOf(keyConfig, consumerNamespace)
 

@@ -22,8 +22,6 @@ abstract class BaseFranzTest extends AnyWordSpec with Matchers with GivenWhenThe
 
   given rt: zio.Runtime[Any] = zio.Runtime.global
 
-//  def zenv: zio.ZEnv = rt.environment
-
   def testTimeout: Duration = 30.seconds
 
   def shortTimeoutJava: Duration = 200.millis
