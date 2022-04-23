@@ -1,5 +1,6 @@
 package franz
 
+import codetemplate.DynamicJson
 import io.circe.Json
 import io.circe.generic.auto.*
 import io.circe.syntax.*
@@ -13,6 +14,7 @@ import zio.{Chunk, Ref, Scope, Task, ZIO}
 import java.nio.ByteBuffer
 import java.util
 import java.util.UUID
+import scala.util.Success
 
 class BatchedStreamTest extends BaseFranzTest {
 
@@ -38,18 +40,10 @@ class BatchedStreamTest extends BaseFranzTest {
         head <- reader.withTopic(avroTopic).kafkaStream.runHead
       } yield head
 
-      //      val q = test.taskValue()
-      //      val Some(committableRecord : CommittableRecord[DynamicJson, DynamicJson]) = rt.unsafeRun(ZIO.scoped(test))
       val Some(committableRecord: CommittableRecord[DynamicJson, DynamicJson]) = rt.unsafeRun(ZIO.scoped(test))
 
-      val key = committableRecord.key
-      val value = committableRecord.value
-      println(committableRecord.value)
-      println(key)
-      println(key.getClass)
-      println(value)
-      println(value.getClass)
-      println(value)
+      committableRecord.key.asString shouldBe "key"
+      committableRecord.value.as[Parent] shouldBe Success(data.as[Parent].toTry.get)
     }
 
     "be able to read from any topic" ignore {
