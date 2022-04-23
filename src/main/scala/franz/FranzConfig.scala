@@ -14,8 +14,9 @@ import zio.kafka.consumer.{ConsumerSettings, Subscription}
 import zio.kafka.producer.{Producer, ProducerSettings}
 import zio.kafka.serde
 import zio.kafka.serde.Serde
-import zio.{RIO, Task, ZIO}
+import zio.{RIO, Scope, Task, ZIO}
 import codetemplate.DynamicJson
+import zio.kafka.admin.{AdminClient, AdminClientSettings}
 import zio.managed.RManaged
 
 import scala.annotation.tailrec
@@ -99,6 +100,7 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
     copy(franzConfig = newFranzConfig.franzConfig.withFallback(franzConfig).resolve())
   }
 
+  val adminConfig = franzConfig.getConfig("admin")
   val consumerConfig = franzConfig.getConfig("consumer")
   val producerConfig = franzConfig.getConfig("producer")
 
@@ -137,6 +139,14 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
 
   def deserializer(isKey: Boolean): Task[serde.Deserializer[Any, DynamicJson]] = Deserializers(schemaRegistryClient, consumerSettings.properties, isKey)
 
+
+  lazy val adminSettings : AdminClientSettings = {
+    AdminClientSettings(
+      adminConfig.asList("bootstrap.servers"),
+      zio.Duration.fromScala(adminConfig.asDuration("closeTimeout")),
+      asJavaMap(adminConfig).asScala.toMap
+    )
+  }
   lazy val consumerSettings: ConsumerSettings = {
     val offset = consumerConfig.getString("offset") match {
       case "earliest" => OffsetRetrieval.Auto(AutoOffsetStrategy.Earliest)
@@ -165,9 +175,15 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
 
   def valueSerde[V](valueConfig: Config = consumerConfig.getConfig("value")): Task[Serde[Any, V]] = serdeFor[V](valueConfig, false)
 
-  def producer = Producer.make(producerSettings)
+  def kafkaProducerTask: ZIO[Scope, Throwable, Producer] = Producer.make(producerSettings)
 
-  def batchedStream = BatchedStream(this)
+  def batchedStream: Task[BatchedStream] = BatchedStream(this)
+  lazy val batchedStreamVal = batchedStream
+
+  def dynamicProducer: DynamicProducer = DynamicProducer(this)
+  lazy val dynamicProducerVal: DynamicProducer = dynamicProducer
+
+  def admin: ZIO[Scope, Throwable, AdminClient] = AdminClient.make(adminSettings)
 
   private def baseUrls = consumerConfig.asList("schema.registry.url").asJava
 

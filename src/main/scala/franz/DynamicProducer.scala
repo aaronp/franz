@@ -11,16 +11,16 @@ import zio.{RIO, Scope, Task, ZIO}
 
 import java.nio.ByteBuffer
 
-object Producers {
+object DynamicProducer {
   type Supported = Int | Long | Json | IndexedRecord | String | ByteBuffer
 }
 
-final case class Producers(config: FranzConfig = FranzConfig()) {
+final case class DynamicProducer(producerConfig: FranzConfig = FranzConfig()) {
 
-  import Producers.*
+  import DynamicProducer.*
 
-  val instance: ZIO[Scope, Throwable, Producer]                      = config.producer
-  private def avroSerde(isKey: Boolean): Task[Serde[Any, Supported]] = config.serdeSupport.avroSerde(isKey).map(_.asInstanceOf[Serde[Any, Supported]])
+  val instance: ZIO[Scope, Throwable, Producer]                      = producerConfig.kafkaProducerTask
+  private def avroSerde(isKey: Boolean): Task[Serde[Any, Supported]] = producerConfig.serdeSupport.avroSerde(isKey).map(_.asInstanceOf[Serde[Any, Supported]])
 
   private def parse(jsonString: String) = io.circe.parser.parse(jsonString).toTry.get
 
@@ -37,7 +37,7 @@ final case class Producers(config: FranzConfig = FranzConfig()) {
   }
 
   def publish[K <: Supported, V <: Supported](key: K, value: V, topic: String | Null = null): ZIO[Scope, Throwable, RecordMetadata] = {
-    val mainTopic = Option(topic).getOrElse(config.topic)
+    val mainTopic = Option(topic).getOrElse(producerConfig.topic)
     for {
       producer: Producer <- instance
       keySerde           <- serdeForValue[K](true, key)
