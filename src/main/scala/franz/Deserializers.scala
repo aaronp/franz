@@ -30,7 +30,7 @@ object Deserializers {
 
         override def deserialize(topic: String, headers: Headers, dataInput: Array[Byte]) = {
           val data: Array[Byte] = Option(dataInput).getOrElse(Array.empty)
-          val src = classOf[org.apache.kafka.clients.consumer.ConsumerRecord[_, _]].getProtectionDomain.getCodeSource.getLocation
+          val src               = classOf[org.apache.kafka.clients.consumer.ConsumerRecord[_, _]].getProtectionDomain.getCodeSource.getLocation
           logger.debug(s"trying avro on '$topic' (isKey: $isKey)  w/ ${data.length} bytes; ${headers}, src: $src")
           fromAvro.deserialize(topic, headers, data).sandbox.either.flatMap {
             case Left(err) =>

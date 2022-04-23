@@ -13,7 +13,7 @@ import scala.util.Try
   */
 case class DynamicJson(underlyingJson: Json) extends Dynamic {
 
-  def asAvro(namespace :String = "gen"): GenericRecord = {
+  def asAvro(namespace: String = "gen"): GenericRecord = {
     import SchemaGen.*
     underlyingJson.asAvro(namespace)
   }

@@ -1,5 +1,6 @@
 package franz
 
+import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
 import io.circe.{Encoder, Json, JsonNumber}
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Type.*
@@ -14,17 +15,6 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 
 object SchemaGen {
-
-  extension [A : Encoder](data : A)
-    def asAvro(namespace : String = "namespace"): GenericRecord = recordForJson(Encoder[A].apply(data), namespace)
-
-  /**
-    * extensions for a string which is expected to be in json format
-    */
-  extension (jason : String)
-    def parseAsJsonTry: Try[Json] = io.circe.parser.parse(jason).toTry
-    def parseAsJson: Json = parseAsJsonTry.get
-    def parseAsAvro(namespace : String = "namespace"): GenericRecord = parseAsJson.asAvro(namespace)
 
   def parseSchema(schemaText: String): Try[Schema] = {
     val parser = new org.apache.avro.Schema.Parser
@@ -162,6 +152,7 @@ object SchemaGen {
             case (Some(f1), Some(f2))                                               => new Field(asFieldName(f1.name()), Schema.createUnion(f1.schema(), f2.schema()), s"Union of $f1 and $f2")
             case (Some(f), _)                                                       => new Field(asFieldName(f.name()), f.schema(), f.doc())
             case (None, Some(f))                                                    => new Field(asFieldName(f.name()), f.schema(), f.doc())
+            case (None, None)                                                       => sys.error(s"Bug: couldn't find field $fieldName")
           }
         }
         val name      = mergeStrings(a.getName, b.getName)

@@ -19,7 +19,7 @@ class ProducersTest extends BaseFranzTest {
     "be able to publish values to different topics" in {
       val config = FranzConfig()
       val p      = config.dynamicProducer
-      val jason  = Json.obj("key" -> "value".asJson)
+      val jason  = "key : value".parseAsJson
 
       val avroTopic  = s"producers-test-${ids.next()}"
       val avroTopic2 = s"producers-test2-${ids.next()}"
@@ -42,14 +42,14 @@ class ProducersTest extends BaseFranzTest {
                         "avro-topic")
         r3 <- p.publish(2L, jason.asAvro("avro.test"), avroTopic)
         r4 <- p.publish("key", ExampleData(2, "data").asAvro("another.test"), avroTopic2)
-        _ <- ZIO.scoped(config.admin.flatMap { admin =>
+        _ <- config.admin.flatMap { admin =>
           for {
             _ <- admin.deleteTopic(avroTopic)
             _ <- admin.deleteTopic(avroTopic2)
             _ <- admin.deleteTopic(numTopic)
             _ <- admin.deleteTopic(jsonTopic)
           } yield ()
-        })
+        }
       } yield List(r1, r2, r3, r4, r5)
 
       val results: List[RecordMetadata] = run(ZIO.scoped(test))
