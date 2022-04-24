@@ -12,6 +12,6 @@ jobs:
         with:
           java-version: 1.8
       - name: Start Kafka
-        run: ./startLocalKafka.sh
+        run: ./startLocalKafkaIntel.sh
       - name: Run tests
         run: sbt test
