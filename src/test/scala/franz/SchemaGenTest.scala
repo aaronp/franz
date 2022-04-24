@@ -74,51 +74,6 @@ class SchemaGenTest extends BaseFranzTest {
       }
     }
 
-    "double-check" ignore {
-      val schemaStr = """{
-                        |  "type" : "record",
-                        |  "name" : "object",
-                        |  "namespace" : "gen",
-                        |  "doc" : "Created for obj: [mixarray]",
-                        |  "fields" : [ {
-                        |    "name" : "mixarray",
-                        |    "type" : {
-                        |      "type" : "array",
-                        |      "items" : {
-                        |        "type" : "record",
-                        |        "name" : "mixarrayType",
-                        |        "doc" : "union of mixarrayType and mixarrayType",
-                        |        "fields" : [ {
-                        |          "name" : "foo",
-                        |          "type" : ["null", "int"]
-                        |        }, {
-                        |          "name" : "fizz",
-                        |          "type" : ["null", "int"]
-                        |        } ]
-                        |      }
-                        |    }
-                        |  } ]
-                        |}
-                        |""".stripMargin
-
-      val parser = new Schema.Parser()
-      val schema = parser.parse(schemaStr)
-
-      val jason = """{
-                "mixarray" : [
-                {
-                  "foo" : 2
-                },
-                {
-                  "fizz" : 3
-                }
-                ]
-            }""".jason
-
-      val readBack = SchemaGen.recordForJsonAndSchema(jason, schema)
-
-      TestData.asJson(readBack) shouldBe jason
-    }
     "generate an avro schema from heterogeneous json arrays which can also consume that json" in {
 
       val jason = """{
