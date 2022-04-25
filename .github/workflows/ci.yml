@@ -11,7 +11,7 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Start Kafka
-        run: ./startLocalKafkaIntel.sh
+#      - name: Start Kafka
+#        run: ./startLocalKafkaIntel.sh
       - name: Run tests
         run: sbt test

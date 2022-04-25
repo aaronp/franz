@@ -1,8 +1,8 @@
 package franz
 
 import io.circe.Json
-import io.circe.syntax.*
 import io.circe.generic.auto.*
+import io.circe.syntax.*
 import org.apache.kafka.clients.producer.RecordMetadata
 import org.scalatest.wordspec.AnyWordSpec
 import zio.{Scope, ZIO}

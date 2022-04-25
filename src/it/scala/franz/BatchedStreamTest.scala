@@ -87,8 +87,8 @@ class BatchedStreamTest extends BaseFranzTest {
       val numTopic  = s"polypublish-test-numbers-${ids.next()}"
       val jsonTopic = s"polypublish-test-json-${ids.next()}"
 
-      import testConfig.dynamicProducerVal.*
       import SchemaGen.*
+      import testConfig.dynamicProducerVal.*
 
       // this test publishes a bunch of different types to different topics, then reads 'em
       val testCase = for {
