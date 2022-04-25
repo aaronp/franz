@@ -42,10 +42,11 @@ usefulTasks := Seq(
 // sbt command-line shortcut
 addCommandAlias("integration-test", "Integration/testOnly -- -n integrationTest")
 
-lazy val IntegrationTest = config("integration").extend(Test)
+lazy val IntegrationTest = config("it").extend(Test)
 
 lazy val root = (project in file("."))
   .configs(IntegrationTest)
+  .settings(Defaults.itSettings)
   .settings(
     Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-l", "integrationTest"), // Exclude integration tests by default (in ScalaTest)
     IntegrationTest / testOptions := Seq.empty // Include integration tests, by nullifying the above option

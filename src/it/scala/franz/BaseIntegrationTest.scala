@@ -11,10 +11,12 @@ import concurrent.duration.*
 
 import scala.util.Properties
 
-abstract class BaseFranzTest extends AnyWordSpec with Matchers with GivenWhenThen with Eventually with ScalaFutures { self =>
+abstract class BaseIntegrationTest extends AnyWordSpec with Matchers with GivenWhenThen with Eventually with ScalaFutures { self =>
 
   extension (json: String)
     def jason = io.circe.parser.parse(json).toTry.get
+
+  def ensureLocalKafkaRunning(): Unit = EnsureLocalKafkaRunning()
 
   object IntegrationTest extends Tag("integrationTest")
 
