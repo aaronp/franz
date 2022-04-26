@@ -29,7 +29,8 @@ class BatchedStreamTest extends BaseFranzTest {
   "BatchedStream" should {
     "be able to read avro data" in {
       val data = DataGen(Parent("", 0, Child("", true)))
-      import testConfig.dynamicProducerVal.*
+      val dp = testConfig.dynamicProducer
+      import dp.*
 
       val avroTopic = s"BatchedStreamTest-${ids.next()}"
 
@@ -54,7 +55,8 @@ class BatchedStreamTest extends BaseFranzTest {
       val data = DataGen(Parent("", 0, Child("", true)))
 
       import SchemaGen.*
-      import testConfig.dynamicProducerVal.*
+      val dp = testConfig.dynamicProducer
+      import dp.*
 
       val jsonTopic = s"topic-json-${ids.next()}"
 
@@ -88,7 +90,8 @@ class BatchedStreamTest extends BaseFranzTest {
       val jsonTopic = s"polypublish-test-json-${ids.next()}"
 
       import SchemaGen.*
-      import testConfig.dynamicProducerVal.*
+      val dp = testConfig.dynamicProducer
+      import dp.*
 
       // this test publishes a bunch of different types to different topics, then reads 'em
       val testCase = for {

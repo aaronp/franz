@@ -5,6 +5,7 @@ package franz
 import io.circe.Json
 import org.apache.avro.generic.{GenericContainer, GenericRecord, IndexedRecord}
 import org.apache.kafka.clients.producer.{ProducerRecord, RecordMetadata}
+import org.slf4j.LoggerFactory
 import zio.kafka.producer.Producer
 import zio.kafka.serde.Serde
 import zio.{RIO, Scope, Task, ZIO}
@@ -49,8 +50,8 @@ final case class DynamicProducer(producerConfig: FranzConfig = FranzConfig()) {
     val mainTopic = Option(topic).getOrElse(producerConfig.topic)
     for {
       producer: Producer <- instance
-      valueSerde         <- serdeForValue[V](false, value)
-      r                  <- producer.produce(ProducerRecord(mainTopic, value), valueSerde, valueSerde)
+      serde         <- serdeForValue[V](false, value)
+      r                  <- producer.produce(ProducerRecord(mainTopic, value), serde, serde)
     } yield r
   }
 

@@ -1,9 +1,13 @@
 package franz
 
+import org.slf4j.LoggerFactory
 import zio.*
 import zio.kafka.consumer.*
+import zio.kafka.consumer.Consumer.{AutoOffsetStrategy, OffsetRetrieval}
 import zio.kafka.serde.Deserializer
 import zio.stream.ZStream
+
+import java.util.UUID
 
 final case class BatchedStream(topic: Subscription,
                                consumerSettings: ConsumerSettings,
@@ -41,16 +45,15 @@ final case class BatchedStream(topic: Subscription,
     * @param onBatchThunk the job to run on each batch
     * @return a stream of batch sizes
     */
-  def foreachRecord[R, E1 >: Throwable, A](thunk: KafkaRecord => ZIO[R, E1, A]): ZStream[R, E1, A] = {
+  def foreachRecord[R, E1 >: Throwable, A](thunk: KafkaRecord => ZIO[R, E1, A]): ZIO[R, E1, Unit] = {
     def onRecord(record: CRecord) = {
-      println(s"onRecord($record)")
       for {
         res <- thunk(record.record)
         _   <- if (blockOnCommit) record.offset.commit else record.offset.commit.fork
       } yield res
     }
 
-    kafkaStream.mapZIO(onRecord)
+    kafkaStream.mapZIO(onRecord).runDrain
   }
 
   private def random() = java.util.UUID.randomUUID().toString
@@ -67,6 +70,18 @@ final case class BatchedStream(topic: Subscription,
     copy(consumerSettings = consumerSettings.withProperty("auto.offset.reset", name).withGroupId(groupId))
 
   def withTopics(topic: String, theRest: String*) = copy(topic = Subscription.topics(topic, theRest: _*))
+
+  def withTopics(topics : Set[String]) = copy(topic = Subscription.Topics(topics))
+
+  def withGroupId(groupId : String = UUID.randomUUID().toString) = withConsumerSettings(_.withGroupId(groupId))
+
+  def withConsumerSettings(f : ConsumerSettings => ConsumerSettings) = copy(consumerSettings = f(consumerSettings))
+  def withConsumerOffsetLatest = withConsumerOffset(AutoOffsetStrategy.Latest)
+  def withConsumerOffsetEarliest = withConsumerOffset(AutoOffsetStrategy.Earliest)
+
+  def withConsumerOffset(reset: AutoOffsetStrategy = AutoOffsetStrategy.Latest) = withConsumerSettings { c =>
+    c.withOffsetRetrieval(OffsetRetrieval.Auto(reset))
+  }
 
   lazy val kafkaStream: ZStream[Any, Throwable, CRecord] =
     Consumer
