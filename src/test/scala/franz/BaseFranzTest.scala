@@ -4,7 +4,7 @@ import org.scalatest.GivenWhenThen
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import zio.{Task, ZIO, ZTraceElement}
+import zio.{RuntimeConfig, Task, ZIO, ZTraceElement, ZEnv}
 //import zio.duration.{Duration, durationInt}
 import org.scalatest.Tag
 import concurrent.duration.*
@@ -18,7 +18,10 @@ abstract class BaseFranzTest extends AnyWordSpec with Matchers with GivenWhenThe
 
   object IntegrationTest extends Tag("integrationTest")
 
-  given rt: zio.Runtime[Any] = zio.Runtime.global
+  given rt: zio.Runtime[ZEnv] = {
+    zio.Runtime.global.unsafeRun(ZIO.scoped(ZEnv.live.toRuntime(RuntimeConfig.default)))
+  }
+
 
   def testTimeout: Duration = 30.seconds
 

@@ -34,7 +34,7 @@ object Deserializers {
           logger.debug(s"trying avro on '$topic' (isKey: $isKey)  w/ ${data.length} bytes; ${headers}, src: $src")
           fromAvro.deserialize(topic, headers, data).sandbox.either.flatMap {
             case Left(err) =>
-              logger.error(s"Deserialize on '${topic}' (isKey: $isKey) failed with $err", err)
+              logger.debug(s"Deserialize on '${topic}' (isKey: $isKey) failed with $err", err)
               ZIO.fail(err.squash)
             case Right(result) =>
               logger.debug(s"FRANZ: read from '$topic' (isKey: $isKey) : $result")

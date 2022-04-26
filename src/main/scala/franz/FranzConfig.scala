@@ -17,7 +17,7 @@ import zio.kafka.serde
 import zio.kafka.serde.Serde
 import zio.managed.RManaged
 import zio.stream.ZSink
-import zio.{RIO, Scope, Task, ZIO, ZTraceElement}
+import zio.{RIO, Scope, Task, ZIO, ZLayer, ZTraceElement}
 
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
@@ -28,7 +28,7 @@ object FranzConfig {
 
   def apply(conf: String, theRest: String*): FranzConfig = new FranzConfig(asConfig(conf, theRest: _*))
 
-  def fromRootConfig(rootConfig: Config = ConfigFactory.load()): FranzConfig = FranzConfig(rootConfig.getConfig("app.franz"))
+  def fromRootConfig(rootConfig: Config = ConfigFactory.load()): FranzConfig = FranzConfig(rootConfig.getConfig("franz"))
 
   def stringKeyAvroValueConfig(rootFallbackConfig: Config = ConfigFactory.load()): FranzConfig = FranzConfig.fromRootConfig {
     keyConf[StringDeserializer, StringSerializer]()
@@ -46,7 +46,7 @@ object FranzConfig {
 
   private def serdeConf[D <: Deserializer[_]: ClassTag, S <: Serializer[_]: ClassTag](`type`: String) = {
     ConfigFactory.parseString(
-      s"""app.franz {
+      s"""franz {
          |  consumer.${`type`}.deserializer : "${implicitly[ClassTag[D]].runtimeClass.getName}"
          |  consumer.${`type`}.serializer : "${implicitly[ClassTag[S]].runtimeClass.getName}" 
          |  producer.${`type`}.deserializer : "${implicitly[ClassTag[D]].runtimeClass.getName}"
@@ -58,7 +58,7 @@ object FranzConfig {
 
   def asConfig(conf: String, theRest: String*) = {
     import args4c.implicits.asConfig
-    (conf +: theRest).toArray.asConfig().getConfig("app.franz")
+    (conf +: theRest).toArray.asConfig().getConfig("franz")
   }
 
   private val counter = AlphaCounter.from(System.currentTimeMillis())
@@ -72,23 +72,25 @@ object FranzConfig {
   }
 }
 
-final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfig("app.franz")) {
+final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfig("franz")) {
   override def toString: String = {
     franzConfig
       .summaryEntries()
       .map { e =>
-        s"app.franz.${e}"
+        s"franz.${e}"
       }
       .mkString("\n")
   }
 
   def defaultSeed = System.currentTimeMillis()
 
+  def withConsumerTopic(topic : String) = withOverrides(s"franz.consumer.topic : '${topic}'")
+
   def withOverrides(conf: String, theRest: String*): FranzConfig = withOverrides(FranzConfig.asConfig(conf, theRest: _*))
 
   def withOverrides(newConfig: Config): FranzConfig = {
-    val newFranzConfig = if (newConfig.hasPath("app.franz")) {
-      newConfig.getConfig("app.franz")
+    val newFranzConfig = if (newConfig.hasPath("franz")) {
+      newConfig.getConfig("franz")
     } else {
       newConfig
     }
@@ -177,6 +179,7 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
   def kafkaProducerTask: ZIO[Scope, Throwable, Producer] = Producer.make(producerSettings)
 
   def batchedStream: Task[BatchedStream] = BatchedStream(this)
+  def batchedStreamLayer = ZLayer.fromZIO(batchedStream)
 
   def runSink[E1 >: Throwable, Z](sink: => ZSink[Any, E1, CommittableRecord[DynamicJson, DynamicJson], Any, Z])(
       implicit trace: ZTraceElement): ZIO[Any, Any, Z] =
@@ -185,10 +188,12 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
     }
 
   def dynamicProducer: DynamicProducer = DynamicProducer(this)
+  def dynamicProducerLayer: ZLayer[Any, Nothing, DynamicProducer] = ZLayer.fromZIO(ZIO.succeed(dynamicProducer))
 
-  lazy val dynamicProducerVal: DynamicProducer = dynamicProducer
+  def kafkaLayer = dynamicProducerLayer ++ batchedStreamLayer ++ adminLayer
 
   def admin: ZIO[Scope, Throwable, AdminClient] = AdminClient.make(adminSettings)
+  def adminLayer = ZLayer.fromZIO(admin)
 
   private def baseUrls = consumerConfig.asList("schema.registry.url").asJava
 
