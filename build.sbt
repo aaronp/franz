@@ -79,6 +79,8 @@ lazy val root = (project in file("."))
     releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     publishMavenStyle := true,
     exportJars := false,
+    publishConfiguration := publishConfiguration.value.withOverwrite(true),
+    publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true),
     pomIncludeRepository := (_ => false),
     publishTo := {
       val nexus = "https://oss.sonatype.org/"
