@@ -50,7 +50,7 @@ final case class DynamicProducer(producerConfig: FranzConfig = FranzConfig()) {
     val mainTopic = Option(topic).getOrElse(producerConfig.topic)
     for {
       producer: Producer <- instance
-      serde         <- serdeForValue[V](false, value)
+      serde              <- serdeForValue[V](false, value)
       r                  <- producer.produce(ProducerRecord(mainTopic, value), serde, serde)
     } yield r
   }
