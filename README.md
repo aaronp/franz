@@ -5,7 +5,7 @@
 
 # Purpose
 
-This library exists to create a better developer experience "DevEx" when working with kafka.
+This library exists to create a better developer experience ("DevEx") when working with [Apache Kafka](https://kafka.apache.org/).
 
 The ultimate goal is to allow very quick (and yet resource-safe, testable, readable, clean) development of streams which is NOT currently the case.
 
@@ -17,13 +17,18 @@ Problems:
 ## Target
 The aim is to improve on the example given by [47deg here](https://www.47deg.com/blog/run-fs2-kafka-scala-cli/).
 
-That is, can we treat scala like a dynamically-typed/scripted language and avoid the (1) build a library/image (2) update devops pipelines w/ that version.
+That is, can we treat scala like a dynamically-typed/scripted language and avoid:
+  1. having to build a versioned application library/image to then...
+  2. have to update a devops pipelines to reference that version?
 
-And instead just have a terse, single-screen business logic script so that we can throw away step #1 and make the whole code fit into a ConfigMap by leveraging e.g. [scala-cli](https://scala-cli.virtuslab.org/)?
 
-## Goals
+It seems we could remote a step and just have a terse, single-screen business logic script.
 
-1. Simplify (by completely removing) all the Serde stuff
+We can get rid of step #1 and make the whole code fit into a ConfigMap by leveraging e.g. [scala-cli](https://scala-cli.virtuslab.org/).
+
+## Franz Project Goals
+
+1. To Simplify (by completely removing) having to deal with all the Kafka Serde stuff -- just let the types we publish/consume do the right thing:
    * remove the generic 'Key' and 'Value' type signatures
    * infer/provide the right Serde based on the actual types we use
 
