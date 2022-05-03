@@ -23,8 +23,8 @@ final case class BatchedStream(topic: Subscription,
     * @param onBatchThunk the job to run on each batch
     * @return a stream of batch sizes
     */
-  def onBatch(onBatchThunk: Array[KafkaRecord] => RIO[ZEnv, Unit]): ZStream[ZEnv, Throwable, Int] = {
-    def persistBatch(batch: Chunk[CRecord]): ZIO[zio.ZEnv, Throwable, Int] = {
+  def onBatch[R](onBatchThunk: Array[KafkaRecord] => RIO[R, Unit]): ZStream[R, Throwable, Int] = {
+    def persistBatch(batch: Chunk[CRecord]): ZIO[R, Throwable, Int] = {
       val offsets = batch.map(_.offset).foldLeft(OffsetBatch.empty)(_ merge _)
       if (batch.isEmpty) {
         Task.succeed(0)

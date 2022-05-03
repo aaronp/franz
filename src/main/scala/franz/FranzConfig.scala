@@ -81,7 +81,7 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
       }
       .mkString("\n")
   }
-
+  
   def defaultSeed = System.currentTimeMillis()
 
   def withConsumerTopic(topic : String) = withOverrides(s"franz.consumer.topic : '${topic}'")

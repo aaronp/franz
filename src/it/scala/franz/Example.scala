@@ -10,8 +10,60 @@ import org.slf4j.{Logger, LoggerFactory}
 import zio.*
 import zio.kafka.admin.AdminClient
 import zio.stream.ZSink
+import java.lang.System.{currentTimeMillis => now}
 
 class Example extends BaseFranzTest {
+
+  object testData {
+    def values = """person : {
+              name : test
+              age : 0
+              address : {
+                street : main
+                postCode : main
+                county : xyz
+                country : xyz
+              }
+            }""".parseAsJson.asTestData(10)
+
+    def writeToTopic(topic : String): ZIO[Scope with DynamicProducer, Throwable, Unit] = for {
+      writer <- ZIO.service[DynamicProducer]
+      _ <- ZIO.foreach(values) { jsonData =>
+        writer.publishValue(jsonData, topic)
+      }
+    } yield ()
+  }
+
+  object mirrorMaker {
+    def copy(fromTopic : String, toTopic : String): ZIO[Scope with DynamicProducer with BatchedStream, Nothing, Fiber.Runtime[Throwable, Unit]] = {
+      for {
+        reader <- ZIO.service[BatchedStream]
+        writer <- ZIO.service[DynamicProducer]
+        fiber <- reader.withTopic(fromTopic).onBatch { batch =>
+          val newRecords = batch.map(_.copyWith() .asProducerRecord(toTopic))
+          writer.publishRecords(newRecords).unit
+        }.runDrain.fork
+      } yield fiber
+    }
+  }
+
+  "MirrorMaker" should {
+    "be simple" in {
+      val from = s"some-topic-$now"
+      val to = s"to-topic-$now"
+
+      val job = for {
+        _ <- testData.writeToTopic(from)
+        readBackFiber <- Recipes.takeFromTopic(Set(to), 6).fork
+        _ <- mirrorMaker.copy(from, to)
+        readBack <- readBackFiber.join
+      } yield readBack
+
+      val copied = job.run()
+      println(copied)
+    }
+  }
+
 
   "Example" should {
 
@@ -62,7 +114,7 @@ class Example extends BaseFranzTest {
       } yield ()
 
 
-      val myApp = for {
+      val myApp: ZIO[Scope with BatchedStream with DynamicProducer, Throwable, List[DynamicJson]] = for {
         writer <- ZIO.service[DynamicProducer]
         readBackFiber <- Recipes.takeFromTopic(Set("json-topic", "another-json-topic", "int-topic", "another-json-topic", "avro-topic-1", "avro-topic-2", "enriched-topic"), 6).fork
         _ <- ZIO.sleep(zio.Duration.fromMillis(2000))
@@ -75,15 +127,14 @@ class Example extends BaseFranzTest {
         readBack <- readBackFiber.join
       } yield readBack.map(_.value)
 
-
-      val scoped = myApp.provideSomeLayer(FranzConfig().kafkaLayer)
-      ZIO.scoped(scoped).taskValue().foreach(println)
+      val result: Seq[DynamicJson] = myApp.run()
+      result.foreach(println)
     }
-    "be able to aggregate a topic" in {}
-    "be able to merge two streams" in {}
-    "be able to read from earliest" in {}
-    "be able to read from latest" in {}
-    "be able to read from an offset" in {}
-    "be able to read from a timestamp" in {}
+//    "be able to aggregate a topic" in {}
+//    "be able to merge two streams" in {}
+//    "be able to read from earliest" in {}
+//    "be able to read from latest" in {}
+//    "be able to read from an offset" in {}
+//    "be able to read from a timestamp" in {}
   }
 }
