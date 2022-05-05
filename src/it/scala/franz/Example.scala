@@ -5,17 +5,37 @@ import io.circe.generic.auto.*
 import io.circe.syntax.*
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.LoggerFactory.getLogger
 import org.slf4j.{Logger, LoggerFactory}
 import zio.*
 import zio.kafka.admin.AdminClient
 import zio.stream.ZSink
-import java.lang.System.{currentTimeMillis => now}
+
+import java.lang.System.currentTimeMillis as now
 
 class Example extends BaseFranzTest {
 
-  object testData {
-    def values = """person : {
+  object mirrorMaker {
+    case class Enriched(sourceOffset: Long, sourcePartition: Long, sourceValue: DynamicJson)
+
+    def copy(fromTopic: String, toTopic: String): ZIO[Scope with DynamicProducer with BatchedStream, Nothing, Fiber.Runtime[Throwable, Unit]] = {
+      Recipes.copyTopic(fromTopic) { record =>
+        record //
+          .withKey(_.asString) // let's have avro keys in the new topic ...
+          .withValue(v => Enriched(record.offset(), record.partition(), v).asAvro("new.namespace")) // ... and avro values
+          .asProducerRecord(toTopic)
+      }
+    }
+  }
+
+  "MirrorMaker" should {
+    "be simple" in {
+      val from = s"some-topic-$now"
+      val to = s"to-topic-$now"
+
+      def testData: Seq[Json] =
+        """person : {
               name : test
               age : 0
               address : {
@@ -26,46 +46,30 @@ class Example extends BaseFranzTest {
               }
             }""".parseAsJson.asTestData(10)
 
-    def writeToTopic(topic : String): ZIO[Scope with DynamicProducer, Throwable, Unit] = for {
-      writer <- ZIO.service[DynamicProducer]
-      _ <- ZIO.foreach(values) { jsonData =>
-        writer.publishValue(jsonData, topic)
-      }
-    } yield ()
-  }
-
-  object mirrorMaker {
-    def copy(fromTopic : String, toTopic : String): ZIO[Scope with DynamicProducer with BatchedStream, Nothing, Fiber.Runtime[Throwable, Unit]] = {
-      for {
-        reader <- ZIO.service[BatchedStream]
-        writer <- ZIO.service[DynamicProducer]
-        fiber <- reader.withTopic(fromTopic).onBatch { batch =>
-          val newRecords = batch.map(_.copyWith() .asProducerRecord(toTopic))
-          writer.publishRecords(newRecords).unit
-        }.runDrain.fork
-      } yield fiber
-    }
-  }
-
-  "MirrorMaker" should {
-    "be simple" in {
-      val from = s"some-topic-$now"
-      val to = s"to-topic-$now"
-
       val job = for {
-        _ <- testData.writeToTopic(from)
+        _ <- Recipes.writeToTopic(from, testData)
         readBackFiber <- Recipes.takeFromTopic(Set(to), 6).fork
         _ <- mirrorMaker.copy(from, to)
         readBack <- readBackFiber.join
       } yield readBack
 
-      val copied = job.run()
-      println(copied)
+      job.run().map(_.pretty).foreach(println)
     }
   }
 
 
-  "Example" should {
+  //    "be able to read from earliest" in {}
+  //    "be able to read from latest" in {}
+  //    "be able to read from an offset" in {}
+  //    "be able to read from a timestamp" in {}
+
+  "Franz" should {
+
+
+    "be able to aggregate a topic" in {
+
+    }
+    //    "be able to merge two streams" in {}
 
     /**
       * this test demonstrates taking one topic w/ {x: ?, y: ?} data and mapping it into another topic containing the sum of x and y:
@@ -93,8 +97,8 @@ class Example extends BaseFranzTest {
 
       val objectData = MyData(1, MoreData(2, false))
 
-      DataGen.repeatFromTemplate(objectData, 10).foreach(println)
-      DataGen.repeatFromTemplate(jsonData, 1).foreach(println)
+      objectData.asTestData(10).foreach(println)
+      jsonData.asTestData(1).foreach(println)
 
       // program which reads enriches a stream and sums the 'x' and 'y' components
       val sum = for {
@@ -130,11 +134,5 @@ class Example extends BaseFranzTest {
       val result: Seq[DynamicJson] = myApp.run()
       result.foreach(println)
     }
-//    "be able to aggregate a topic" in {}
-//    "be able to merge two streams" in {}
-//    "be able to read from earliest" in {}
-//    "be able to read from latest" in {}
-//    "be able to read from an offset" in {}
-//    "be able to read from a timestamp" in {}
   }
 }

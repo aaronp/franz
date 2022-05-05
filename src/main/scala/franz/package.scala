@@ -10,14 +10,26 @@ import zio.kafka.consumer.CommittableRecord
 import zio.kafka.producer.Producer
 import zio.{RuntimeConfig, Scope, ZEnv, ZIO}
 
+import scala.jdk.CollectionConverters.*
 import scala.util.Try
-
+import java.time.{Instant, LocalDateTime, ZoneId}
 package object franz {
 
   type CRecord = CommittableRecord[DynamicJson, DynamicJson]
   type KafkaRecord = ConsumerRecord[DynamicJson, DynamicJson]
 
+  def asLocalTime(millis : Long) = LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneId.of("UTC"))
+  /**
+    * Some convenience methods on a consumer record (copy methods)
+    */
   extension [K,V](record: ConsumerRecord[K, V]) {
+    def withKey[K2](f: K => K2): ConsumerRecord[K2, V] = copyWith {
+      case (k, v) => (f(k), v)
+    }
+    def withValue[V2](f: V => V2): ConsumerRecord[K, V2] = copyWith {
+      case (k, v) => (k, f(v))
+    }
+
     def copyWith[K2, V2](f: (K, V) => (K2, V2)): ConsumerRecord[K2, V2] = {
       val (key, value) = f(record.key(), record.value())
       new ConsumerRecord(
@@ -34,6 +46,12 @@ package object franz {
         record.leaderEpoch()
       )
     }
+
+    /** easily be able to convert a consume record into a producer record
+      * @param topic the target topic
+      * @param partition the target partition
+      * @return a producer record
+      */
     def asProducerRecord(topic: String = record.topic(), partition: Int = record.partition()): ProducerRecord[K, V] = {
       ProducerRecord[K, V](
         topic,
@@ -43,11 +61,44 @@ package object franz {
         record.headers()
       )
     }
+
+    def pretty : String =
+      s"""${record.topic()} : ${record.partition()}@${record.offset()} {
+         |  timestamp : ${asLocalTime(record.timestamp())}
+         |  timestampType : ${record.timestampType()}
+         |  headers : ${record.headers().iterator().asScala.mkString("[",",","]")}
+         |  key : ${record.key()}
+         |  value : ${record.value()}
+         |}""".stripMargin
   }
 
+  extension [K,V](record : ProducerRecord[K, V]) {
+    def pretty : String =
+      s"""${record.topic()} : ${record.partition()} {
+         |  timestamp : ${asLocalTime(record.timestamp())}
+         |  headers : ${record.headers().iterator().asScala.mkString("[",",","]")}
+         |  key : ${record.key()}
+         |  value : ${record.value()}
+         |}""".stripMargin
+  }
+
+
   extension[A: Encoder] (value: A) {
+    /**
+      * The ability to turn any encodable value into a sequence of test data via a postFix operation:
+      * {{{
+      *   val someData : SomeData = ...
+      *   val testData: Seq[Json] = someData.asTestData(10)
+      * }}}
+      * @param num
+      * @param initialSeed
+      * @return
+      */
     def asTestData(num: Int, initialSeed: Seed = Seed()): Seq[Json] = DataGen.repeatFromTemplate(value, num, initialSeed)
   }
+
+  /** "clean up" the ability to execute a ZIO for its value using a given FranzConfig
+    */
   extension[E, A] (app: ZIO[Scope & DynamicProducer & BatchedStream, E, A]) {
     def run(config: FranzConfig = FranzConfig()): A = {
       val scoped = app.provideSomeLayer(config.kafkaLayer)

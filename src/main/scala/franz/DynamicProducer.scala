@@ -71,6 +71,13 @@ final case class DynamicProducer(producerConfig: FranzConfig = FranzConfig()) {
     } yield result
   }
 
+  /**
+    * batch publish
+    * @param records
+    * @tparam K
+    * @tparam V
+    * @return
+    */
   def publishRecords[K <: Supported, V <: Supported](records: Iterable[ProducerRecord[K, V]]): ZIO[Scope, Throwable, Chunk[RecordMetadata]] = {
     records.headOption match {
       case None => ZIO.succeed(Chunk.empty)
