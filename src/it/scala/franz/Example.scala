@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory.getLogger
 import org.slf4j.{Logger, LoggerFactory}
 import zio.*
 import zio.kafka.admin.AdminClient
-import zio.stream.ZSink
+import zio.stream.{ZSink, ZStream}
 
 import java.lang.System.currentTimeMillis as now
 
@@ -30,7 +30,7 @@ class Example extends BaseFranzTest {
   }
 
   "MirrorMaker" should {
-    "be simple" in {
+    "be simple" ignore {
       val from = s"some-topic-$now"
       val to = s"to-topic-$now"
 
@@ -44,11 +44,11 @@ class Example extends BaseFranzTest {
                 county : xyz
                 country : xyz
               }
-            }""".parseAsJson.asTestData(10)
+            }""".parseAsJson.asTestData().take(10).toSeq
 
       val job = for {
         _ <- Recipes.writeToTopic(from, testData)
-        readBackFiber <- Recipes.takeFromTopic(Set(to), 6).fork
+        readBackFiber <- Recipes.takeLatestFromTopic(Set(to), 6).fork
         _ <- mirrorMaker.copy(from, to)
         readBack <- readBackFiber.join
       } yield readBack
@@ -66,9 +66,51 @@ class Example extends BaseFranzTest {
   "Franz" should {
 
 
-    "be able to aggregate a topic" in {
+    "be able to aggregate a topic (e.g. sum a stream of integers)" in {
+      def testData =
+        """x: 1
+           y: 1""".parseAsJson.asTestData()
 
+      val from = s"xy-topic-$now"
+      val to = s"xy-sum-$now"
+
+      def asJson(x: Int, y: Int, xTotal: Int, yTotal: Int, total: Int) =
+        s"""
+           x: $x
+           y: $y
+           xTotal : $xTotal
+           yTotal : $yTotal
+           total : $total""".parseAsJson.asDynamicJson
+
+      def sum(accum: DynamicJson, x : Int, y : Int) = {
+        val xTotal = accum.xTotal.asInt()
+        val yTotal = accum.yTotal.asInt()
+        val total = accum.total.asInt()
+        asJson(x, y, xTotal + x, yTotal + y, total + x + y).asDynamicJson
+      }
+
+      def zero = asJson(0,0,0,0,0)
+
+      val job = for {
+        _ <- Recipes.writeToTopic(from, testData.take(10).to(Iterable))
+        inputData <- Recipes.streamLatest(Set(from))
+        pipedData <- Recipes.takeLatestFromTopic(Set(to), 10).fork
+        mappedStream: ZStream[Any, Throwable, DynamicJson] = inputData.tap(r => ZIO.succeed(println(s" .... on $r"))) .mapAccum(zero) {
+          case (data, next) =>
+            val x = next.value.x.asInt()
+            val y = next.value.y.asInt()
+            val runningTotal = sum(data, x, y)
+            println(s"""Running total is:\n $runningTotal""")
+            (runningTotal, runningTotal)
+        }
+        _ <- Recipes.pipeToTopic(mappedStream, to).fork
+        result <- pipedData.join
+      } yield result
+
+      val got = job.run()
+      println(got)
     }
+
     //    "be able to merge two streams" in {}
 
     /**
@@ -97,9 +139,6 @@ class Example extends BaseFranzTest {
 
       val objectData = MyData(1, MoreData(2, false))
 
-      objectData.asTestData(10).foreach(println)
-      jsonData.asTestData(1).foreach(println)
-
       // program which reads enriches a stream and sums the 'x' and 'y' components
       val sum = for {
         writer <- ZIO.service[DynamicProducer]
@@ -110,7 +149,7 @@ class Example extends BaseFranzTest {
           val sum = r.value.x.asInt() + r.value.y.asInt()
 
           // create a new record w/ the new 'sum' field
-          val newRecord = r.value() + (s"sum : ${sum}".parseAsJson)
+          val newRecord = r.value() + s"sum : $sum".parseAsJson
 
           // and squirt it into our sumTopic:
           writer.publishValue(newRecord.asAvro("sum"), "enriched-topic")
@@ -120,7 +159,7 @@ class Example extends BaseFranzTest {
 
       val myApp: ZIO[Scope with BatchedStream with DynamicProducer, Throwable, List[DynamicJson]] = for {
         writer <- ZIO.service[DynamicProducer]
-        readBackFiber <- Recipes.takeFromTopic(Set("json-topic", "another-json-topic", "int-topic", "another-json-topic", "avro-topic-1", "avro-topic-2", "enriched-topic"), 6).fork
+        readBackFiber <- Recipes.takeLatestFromTopic(Set("json-topic", "another-json-topic", "int-topic", "another-json-topic", "avro-topic-1", "avro-topic-2", "enriched-topic"), 6).fork
         _ <- ZIO.sleep(zio.Duration.fromMillis(2000))
         _ <- writer.publishValue(jsonData, "json-topic")
         _ <- writer.publishValue(123, "int-topic")

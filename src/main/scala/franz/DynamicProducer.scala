@@ -1,7 +1,5 @@
 package franz
 
-//import zio.blocking.Blocking
-
 import io.circe.Json
 import org.apache.avro.generic.{GenericContainer, GenericRecord, IndexedRecord}
 import org.apache.kafka.clients.producer.{ProducerRecord, RecordMetadata}
@@ -11,10 +9,6 @@ import zio.kafka.serde.Serde
 import zio.{Chunk, RIO, Scope, Task, ZIO}
 
 import java.nio.ByteBuffer
-
-object DynamicProducer {
-  type Supported = Int | Long | DynamicJson | Json | IndexedRecord | String | ByteBuffer
-}
 
 /**
   * A data structure which provides convenience methods over a ZIO Kafka Producer
@@ -78,7 +72,29 @@ final case class DynamicProducer(producerConfig: FranzConfig = FranzConfig()) {
     * @tparam V
     * @return
     */
-  def publishRecords[K <: Supported, V <: Supported](records: Iterable[ProducerRecord[K, V]]): ZIO[Scope, Throwable, Chunk[RecordMetadata]] = {
+  def publishRecords[K <: Supported, V <: Supported](records: Iterable[ProducerRecord[K, V]]): ZIO[Scope, Throwable, Chunk[RecordMetadata]] =
+    publishRecords(Chunk.fromIterable(records))
+
+  def publishRecordValues[V <: Supported](records: Chunk[V], topic: String | Null = null): ZIO[Scope, Throwable, Chunk[RecordMetadata]] = {
+    publishRecordValuesAndKeys(records, _ => "", topic)
+  }
+  def publishRecordValuesAndKeys[K <: Supported, V <: Supported](records: Chunk[V], asKey : V => K, topic: String | Null = null): ZIO[Scope, Throwable, Chunk[RecordMetadata]] = {
+    val mainTopic = Option(topic).getOrElse(producerConfig.topic)
+    val producerRecords = records.map { value =>
+      val key = asKey(value)
+      ProducerRecord[K, V](mainTopic, key, value)
+    }
+    publishRecords(producerRecords)
+  }
+
+  /**
+    * batch publish
+    * @param records
+    * @tparam K
+    * @tparam V
+    * @return
+    */
+  def publishRecords[K <: Supported, V <: Supported](records: Chunk[ProducerRecord[K, V]]): ZIO[Scope, Throwable, Chunk[RecordMetadata]] = {
     records.headOption match {
       case None => ZIO.succeed(Chunk.empty)
       case Some(head) =>
@@ -86,7 +102,8 @@ final case class DynamicProducer(producerConfig: FranzConfig = FranzConfig()) {
           producer: Producer <- instance
           keySerde <- serdeForValue[K](true, head.key())
           valueSerde <- serdeForValue[V](false, head.value())
-          job <- producer.produceChunkAsync(Chunk.fromIterable(records), keySerde, valueSerde)
+          _ = println(records.mkString(s"""publishing chuck:\n""", "\n", "\n"))
+          job <- producer.produceChunkAsync(records, keySerde, valueSerde)
           result <- job
         } yield result
     }

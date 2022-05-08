@@ -82,7 +82,7 @@ class BatchedStreamTest extends BaseFranzTest {
     }
 
     "be able to read from any topic" in {
-      val data     = DataGen.repeatFromTemplate(Parent("", 0, Child("", true)), 10)
+      val data     = DataGen.repeatFromTemplate(Parent("", 0, Child("", true)), 10).toSeq
       val expected = (data.size * 2) + 1 // two lots of 10 records, as well as a single numeric record
 
       val avroTopic = s"polypublish-test-avro-${ids.next()}"

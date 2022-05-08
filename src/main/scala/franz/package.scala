@@ -1,7 +1,7 @@
 import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
 import franz.SchemaGen.recordForJson
 import io.circe.{Encoder, Json}
-import org.apache.avro.generic.GenericRecord
+import org.apache.avro.generic.{GenericRecord, IndexedRecord}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -10,19 +10,27 @@ import zio.kafka.consumer.CommittableRecord
 import zio.kafka.producer.Producer
 import zio.{RuntimeConfig, Scope, ZEnv, ZIO}
 
+import java.nio.ByteBuffer
+import java.time.{Instant, LocalDateTime, ZoneId}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import java.time.{Instant, LocalDateTime, ZoneId}
+
 package object franz {
+
+  /**
+    * Supported Kafka types (to convert to/from DynamicJson)
+    */
+  type Supported = Int | Long | DynamicJson | Json | IndexedRecord | String | ByteBuffer
 
   type CRecord = CommittableRecord[DynamicJson, DynamicJson]
   type KafkaRecord = ConsumerRecord[DynamicJson, DynamicJson]
 
-  def asLocalTime(millis : Long) = LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneId.of("UTC"))
+  def asLocalTime(millis: Long) = LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneId.of("UTC"))
+
   /**
     * Some convenience methods on a consumer record (copy methods)
     */
-  extension [K,V](record: ConsumerRecord[K, V]) {
+  extension[K, V] (record: ConsumerRecord[K, V]) {
     def withKey[K2](f: K => K2): ConsumerRecord[K2, V] = copyWith {
       case (k, v) => (f(k), v)
     }
@@ -48,7 +56,8 @@ package object franz {
     }
 
     /** easily be able to convert a consume record into a producer record
-      * @param topic the target topic
+      *
+      * @param topic     the target topic
       * @param partition the target partition
       * @return a producer record
       */
@@ -62,21 +71,21 @@ package object franz {
       )
     }
 
-    def pretty : String =
+    def pretty: String =
       s"""${record.topic()} : ${record.partition()}@${record.offset()} {
          |  timestamp : ${asLocalTime(record.timestamp())}
          |  timestampType : ${record.timestampType()}
-         |  headers : ${record.headers().iterator().asScala.mkString("[",",","]")}
+         |  headers : ${record.headers().iterator().asScala.mkString("[", ",", "]")}
          |  key : ${record.key()}
          |  value : ${record.value()}
          |}""".stripMargin
   }
 
-  extension [K,V](record : ProducerRecord[K, V]) {
-    def pretty : String =
+  extension[K, V] (record: ProducerRecord[K, V]) {
+    def pretty: String =
       s"""${record.topic()} : ${record.partition()} {
          |  timestamp : ${asLocalTime(record.timestamp())}
-         |  headers : ${record.headers().iterator().asScala.mkString("[",",","]")}
+         |  headers : ${record.headers().iterator().asScala.mkString("[", ",", "]")}
          |  key : ${record.key()}
          |  value : ${record.value()}
          |}""".stripMargin
@@ -85,16 +94,17 @@ package object franz {
 
   extension[A: Encoder] (value: A) {
     /**
-      * The ability to turn any encodable value into a sequence of test data via a postFix operation:
+      * The ability to turn any encodeable value into a sequence of test data via a postFix operation:
       * {{{
       *   val someData : SomeData = ...
-      *   val testData: Seq[Json] = someData.asTestData(10)
+      *   val testData: Iterator[Json] = someData.asTestData(10)
       * }}}
-      * @param num
+      *
       * @param initialSeed
       * @return
       */
-    def asTestData(num: Int, initialSeed: Seed = Seed()): Seq[Json] = DataGen.repeatFromTemplate(value, num, initialSeed)
+    def asTestData(initialSeed: Seed = Seed()): Iterator[Json] = DataGen.repeatFromTemplateIter(value, initialSeed)
+
   }
 
   /** "clean up" the ability to execute a ZIO for its value using a given FranzConfig
@@ -112,6 +122,9 @@ package object franz {
   extension[A: Encoder] (data: A)
     def asAvro(namespace: String = "namespace"): GenericRecord = recordForJson(Encoder[A].apply(data), namespace)
 
+  extension (json: Json) {
+    def asDynamicJson = DynamicJson(json)
+  }
   extension (hocon: String) {
     def jason: String = ConfigFactory.parseString(hocon).root().render(ConfigRenderOptions.concise())
     def parseAsJsonTry: Try[Json] = io.circe.parser.parse(jason).toTry
