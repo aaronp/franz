@@ -81,6 +81,19 @@ package object franz {
          |}""".stripMargin
   }
 
+
+  extension (crecord: CRecord) {
+    def pretty: String =
+      import crecord.record
+      s"""${record.topic()} : ${record.partition()}@${record.offset()} {
+         |  timestamp : ${asLocalTime(record.timestamp())}
+         |  timestampType : ${record.timestampType()}
+         |  headers : ${record.headers().iterator().asScala.mkString("[", ",", "]")}
+         |  key : ${record.key()}
+         |  value : ${record.value()}
+         |}""".stripMargin
+  }
+
   extension[K, V] (record: ProducerRecord[K, V]) {
     def pretty: String =
       s"""${record.topic()} : ${record.partition()} {

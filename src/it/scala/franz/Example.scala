@@ -30,7 +30,7 @@ class Example extends BaseFranzTest {
   }
 
   "MirrorMaker" should {
-    "be simple" ignore {
+    "be simple" in {
       val from = s"some-topic-$now"
       val to = s"to-topic-$now"
 
@@ -57,24 +57,17 @@ class Example extends BaseFranzTest {
     }
   }
 
-
-  //    "be able to read from earliest" in {}
-  //    "be able to read from latest" in {}
-  //    "be able to read from an offset" in {}
-  //    "be able to read from a timestamp" in {}
-
-  "Franz" should {
-
+  "Streaming" should {
 
     "be able to aggregate a topic (e.g. sum a stream of integers)" in {
       def testData =
         """x: 1
-           y: 1""".parseAsJson.asTestData()
+           y: 1""".parseAsJson.asTestData(Seed(123))
 
       val from = s"xy-topic-$now"
       val to = s"xy-sum-$now"
 
-      def asJson(x: Int, y: Int, xTotal: Int, yTotal: Int, total: Int) =
+      def asJson(x: Int, y: Int, xTotal: Int, yTotal: Int, total: Int): DynamicJson =
         s"""
            x: $x
            y: $y
@@ -82,36 +75,46 @@ class Example extends BaseFranzTest {
            yTotal : $yTotal
            total : $total""".parseAsJson.asDynamicJson
 
-      def sum(accum: DynamicJson, x : Int, y : Int) = {
+      def sum(accum: DynamicJson, x: Int, y: Int): DynamicJson = {
         val xTotal = accum.xTotal.asInt()
         val yTotal = accum.yTotal.asInt()
         val total = accum.total.asInt()
-        asJson(x, y, xTotal + x, yTotal + y, total + x + y).asDynamicJson
+        asJson(x, y, xTotal + x, yTotal + y, total + x + y)
       }
 
-      def zero = asJson(0,0,0,0,0)
+      def zero = asJson(0, 0, 0, 0, 0)
 
       val job = for {
-        _ <- Recipes.writeToTopic(from, testData.take(10).to(Iterable))
-        inputData <- Recipes.streamLatest(Set(from))
+        inputData <- Recipes.streamEarliest(Set(from))
         pipedData <- Recipes.takeLatestFromTopic(Set(to), 10).fork
-        mappedStream: ZStream[Any, Throwable, DynamicJson] = inputData.tap(r => ZIO.succeed(println(s" .... on $r"))).mapAccum(zero) {
+        mappedStream: ZStream[Any, Throwable, DynamicJson] = inputData.mapAccum(zero) {
           case (data, next) =>
-            println(s""" on NEXT """)
-
-            val x = next.value.x.asInt()
-            val y = next.value.y.asInt()
+            val x = next.value.x.asInt().abs % 10
+            val y = next.value.y.asInt().abs % 10
             val runningTotal = sum(data, x, y)
-            println(s"""Running total is:\n $runningTotal""")
             (runningTotal, runningTotal)
         }
-        _ = println("pipe to topic")
+        _ <- Recipes.writeToTopic(from, testData.take(10).to(Iterable))
         _ <- Recipes.pipeToTopic(mappedStream, to).fork
         result <- pipedData.join
       } yield result
 
-      val got = job.run()
-      println(got)
+      val expected: String =
+        """{"total":7,"x":3,"xTotal":3,"y":4,"yTotal":4}
+          |{"total":14,"x":3,"xTotal":6,"y":4,"yTotal":8}
+          |{"total":21,"x":1,"xTotal":7,"y":6,"yTotal":14}
+          |{"total":26,"x":3,"xTotal":10,"y":2,"yTotal":16}
+          |{"total":35,"x":9,"xTotal":19,"y":0,"yTotal":16}
+          |{"total":46,"x":7,"xTotal":26,"y":4,"yTotal":20}
+          |{"total":47,"x":1,"xTotal":27,"y":0,"yTotal":20}
+          |{"total":56,"x":1,"xTotal":28,"y":8,"yTotal":28}
+          |{"total":57,"x":1,"xTotal":29,"y":0,"yTotal":28}
+          |{"total":62,"x":5,"xTotal":34,"y":0,"yTotal":28}""".stripMargin
+      val expectedRecords = expected.linesIterator.map(line => line.parseAsJson.asDynamicJson).toList
+      val actualRecords: Seq[DynamicJson] = job.run().map(_.value)
+      withClue(actualRecords.mkString("\n")) {
+        actualRecords should contain theSameElementsAs (expectedRecords)
+      }
     }
 
     //    "be able to merge two streams" in {}

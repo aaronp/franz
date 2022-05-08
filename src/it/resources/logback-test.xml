@@ -8,6 +8,7 @@
     <logger level="error" name="org.apache.kafka.clients.consumer.ConsumerConfig" />
     <logger level="error" name="org.apache.kafka.clients.producer.ProducerConfig" />
     <logger level="error" name="org.apache.kafka.clients.admin.AdminClientConfig" />
+    <logger level="error" name="org.apache.kafka.clients.NetworkClient" />
 
     <root level="warn">
         <appender-ref ref="STDOUT" />

@@ -103,7 +103,6 @@ final case class DynamicProducer(settings : DynamicProducerSettings, kafkaProduc
         for {
           keySerde <- serdeForValue[K](true, head.key())
           valueSerde <- serdeForValue[V](false, head.value())
-          _ = println(records.mkString(s"""publishing chuck:\n""", "\n", "\n"))
           job <- kafkaProducer.produceChunkAsync(records, keySerde, valueSerde)
           result <- job
         } yield result

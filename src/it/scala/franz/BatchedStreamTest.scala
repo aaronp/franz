@@ -54,8 +54,6 @@ class BatchedStreamTest extends BaseFranzTest {
       val data = DataGen(Parent("", 0, Child("", true)))
 
       import SchemaGen.*
-      val dp = testConfig.dynamicProducer
-      import dp.*
 
       val jsonTopic = s"topic-json-${ids.next()}"
 
