@@ -95,14 +95,17 @@ class Example extends BaseFranzTest {
         _ <- Recipes.writeToTopic(from, testData.take(10).to(Iterable))
         inputData <- Recipes.streamLatest(Set(from))
         pipedData <- Recipes.takeLatestFromTopic(Set(to), 10).fork
-        mappedStream: ZStream[Any, Throwable, DynamicJson] = inputData.tap(r => ZIO.succeed(println(s" .... on $r"))) .mapAccum(zero) {
+        mappedStream: ZStream[Any, Throwable, DynamicJson] = inputData.tap(r => ZIO.succeed(println(s" .... on $r"))).mapAccum(zero) {
           case (data, next) =>
+            println(s""" on NEXT """)
+
             val x = next.value.x.asInt()
             val y = next.value.y.asInt()
             val runningTotal = sum(data, x, y)
             println(s"""Running total is:\n $runningTotal""")
             (runningTotal, runningTotal)
         }
+        _ = println("pipe to topic")
         _ <- Recipes.pipeToTopic(mappedStream, to).fork
         result <- pipedData.join
       } yield result

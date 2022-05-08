@@ -27,6 +27,10 @@ object Recipes {
   def pipeToTopic(values: ZStream[Any, Throwable, Supported], topic: String | Null = null): ZIO[Scope with DynamicProducer, Throwable, Unit] = for {
     writer <- ZIO.service[DynamicProducer]
     _ <- values.run(
+//      ZSink.foreach[Scope, Throwable, Supported] {
+//
+//      }
+
       ZSink.foldLeftChunksZIO[Scope, Throwable, Supported, Int](0) {
         case (x, chunk) => writer.publishRecordValues(chunk, topic).as(x)
       }
