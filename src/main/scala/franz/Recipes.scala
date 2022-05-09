@@ -33,6 +33,14 @@ object Recipes {
     )
   } yield ()
 
+  /**
+    * Writes the stream to kafka given the 'asKey' function for creating the kafka keys
+    * @param values
+    * @param asKey
+    * @tparam K
+    * @tparam V
+    * @return
+    */
   def pipeToTopicWithKeys[K <: Supported, V <: Supported](values: ZStream[Any, Throwable, V])(asKey: V => K): ZIO[Scope with DynamicProducer, Throwable, Unit] = for {
     writer <- ZIO.service[DynamicProducer]
     _ <- values.run(
