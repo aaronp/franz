@@ -81,7 +81,7 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
       }
       .mkString("\n")
   }
-
+  
   def defaultSeed = System.currentTimeMillis()
 
   def withConsumerTopic(topic : String) = withOverrides(s"franz.consumer.topic : '${topic}'")
@@ -187,8 +187,9 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
       stream.kafkaStream.run(sink)
     }
 
-  def dynamicProducer: DynamicProducer = DynamicProducer(this)
-  def dynamicProducerLayer: ZLayer[Any, Nothing, DynamicProducer] = ZLayer.fromZIO(ZIO.succeed(dynamicProducer))
+  def dynamicProducer: ZIO[Scope, Throwable, DynamicProducer] = DynamicProducerSettings(this).producer
+//  def dynamicProducerLayer: ZLayer[Any, Nothing, DynamicProducer] = ZLayer.fromZIO(dynamicProducer)
+  def dynamicProducerLayer = ZLayer.fromZIO(dynamicProducer)
 
   def kafkaLayer = dynamicProducerLayer ++ batchedStreamLayer ++ adminLayer
 
