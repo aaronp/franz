@@ -71,13 +71,13 @@ final case class BatchedStream(topic: Subscription,
 
   def withTopics(topic: String, theRest: String*) = copy(topic = Subscription.topics(topic, theRest: _*))
 
-  def withTopics(topics : Set[String]) = copy(topic = Subscription.Topics(topics))
+  def withTopics(topics: Set[String]) = copy(topic = Subscription.Topics(topics))
 
-  def withGroupId(groupId : String = UUID.randomUUID().toString) = withConsumerSettings(_.withGroupId(groupId))
+  def withGroupId(groupId: String = UUID.randomUUID().toString) = withConsumerSettings(_.withGroupId(groupId))
 
-  def withConsumerSettings(f : ConsumerSettings => ConsumerSettings) = copy(consumerSettings = f(consumerSettings))
-  def withConsumerOffsetLatest = withConsumerOffset(AutoOffsetStrategy.Latest)
-  def withConsumerOffsetEarliest = withConsumerOffset(AutoOffsetStrategy.Earliest)
+  def withConsumerSettings(f: ConsumerSettings => ConsumerSettings) = copy(consumerSettings = f(consumerSettings))
+  def withConsumerOffsetLatest                                      = withConsumerOffset(AutoOffsetStrategy.Latest)
+  def withConsumerOffsetEarliest                                    = withConsumerOffset(AutoOffsetStrategy.Earliest)
 
   def withConsumerOffset(reset: AutoOffsetStrategy = AutoOffsetStrategy.Latest) = withConsumerSettings { c =>
     c.withOffsetRetrieval(OffsetRetrieval.Auto(reset))

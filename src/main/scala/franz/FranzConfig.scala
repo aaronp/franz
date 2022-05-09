@@ -81,10 +81,10 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
       }
       .mkString("\n")
   }
-  
+
   def defaultSeed = System.currentTimeMillis()
 
-  def withConsumerTopic(topic : String) = withOverrides(s"franz.consumer.topic : '${topic}'")
+  def withConsumerTopic(topic: String) = withOverrides(s"franz.consumer.topic : '${topic}'")
 
   def withOverrides(conf: String, theRest: String*): FranzConfig = withOverrides(FranzConfig.asConfig(conf, theRest: _*))
 
@@ -179,7 +179,7 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
   def kafkaProducerTask: ZIO[Scope, Throwable, Producer] = Producer.make(producerSettings)
 
   def batchedStream: Task[BatchedStream] = BatchedStream(this)
-  def batchedStreamLayer = ZLayer.fromZIO(batchedStream)
+  def batchedStreamLayer                 = ZLayer.fromZIO(batchedStream)
 
   def runSink[E1 >: Throwable, Z](sink: => ZSink[Any, E1, CommittableRecord[DynamicJson, DynamicJson], Any, Z])(
       implicit trace: ZTraceElement): ZIO[Any, Any, Z] =
@@ -194,7 +194,7 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
   def kafkaLayer = dynamicProducerLayer ++ batchedStreamLayer ++ adminLayer
 
   def admin: ZIO[Scope, Throwable, AdminClient] = AdminClient.make(adminSettings)
-  def adminLayer = ZLayer.fromZIO(admin)
+  def adminLayer                                = ZLayer.fromZIO(admin)
 
   private def baseUrls = consumerConfig.asList("schema.registry.url").asJava
 

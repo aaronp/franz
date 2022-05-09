@@ -22,30 +22,29 @@ final case class DynamicProducerSettings(producerConfig: FranzConfig = FranzConf
 /**
   * A data structure which provides convenience methods over a ZIO Kafka Producer
   */
-final case class DynamicProducer(settings : DynamicProducerSettings, kafkaProducer : Producer) {
+final case class DynamicProducer(settings: DynamicProducerSettings, kafkaProducer: Producer) {
 
   import DynamicProducer.*
-
 
   private def parseJsonOrThrow(jsonString: String): Json = io.circe.parser.parse(jsonString).toTry.get
 
   private def serdeForValue[X <: Supported](isKey: Boolean, value: X): Task[Serde[Any, X]] = {
     val task = value match {
-      case _: Int => Task.succeed(Serde.int)
+      case _: Int  => Task.succeed(Serde.int)
       case _: Long => Task.succeed(Serde.long)
       case _: Json =>
         Task.succeed(Serde.string.inmap[Json](parseJsonOrThrow) {
           case null => ""
-          case a => a.noSpaces
+          case a    => a.noSpaces
         })
       case _: DynamicJson =>
         Task.succeed(Serde.string.inmap[DynamicJson](parseJsonOrThrow.andThen(DynamicJson.apply)) {
           case null => ""
-          case a => a.underlyingJson.noSpaces
+          case a    => a.underlyingJson.noSpaces
         })
       case _: IndexedRecord => settings.avroSerde(isKey)
-      case _: String => Task.succeed(Serde.string)
-      case _: ByteBuffer => Task.succeed(Serde.byteBuffer)
+      case _: String        => Task.succeed(Serde.string)
+      case _: ByteBuffer    => Task.succeed(Serde.byteBuffer)
     }
     task.map(_.asInstanceOf[Serde[Any, X]])
   }
@@ -54,16 +53,16 @@ final case class DynamicProducer(settings : DynamicProducerSettings, kafkaProduc
     val mainTopic = Option(topic).getOrElse(settings.topic)
     for {
       serde <- serdeForValue[V](false, value)
-      r <- kafkaProducer.produce(ProducerRecord(mainTopic, value), serde, serde)
+      r     <- kafkaProducer.produce(ProducerRecord(mainTopic, value), serde, serde)
     } yield r
   }
 
   def publishRecord[K <: Supported, V <: Supported](record: ProducerRecord[K, V]) = {
     for {
-      keySerde <- serdeForValue[K](true, record.key())
+      keySerde   <- serdeForValue[K](true, record.key())
       valueSerde <- serdeForValue[V](false, record.value())
-      job <- kafkaProducer.produceAsync(record, keySerde, valueSerde)
-      result <- job
+      job        <- kafkaProducer.produceAsync(record, keySerde, valueSerde)
+      result     <- job
     } yield result
   }
 
@@ -80,7 +79,9 @@ final case class DynamicProducer(settings : DynamicProducerSettings, kafkaProduc
   def publishRecordValues[V <: Supported](records: Chunk[V], topic: String | Null = null): ZIO[Any, Throwable, Chunk[RecordMetadata]] = {
     publishRecordValuesAndKeys(records, _ => "", topic)
   }
-  def publishRecordValuesAndKeys[K <: Supported, V <: Supported](records: Chunk[V], asKey : V => K, topic: String | Null = null): ZIO[Any, Throwable, Chunk[RecordMetadata]] = {
+  def publishRecordValuesAndKeys[K <: Supported, V <: Supported](records: Chunk[V],
+                                                                 asKey: V => K,
+                                                                 topic: String | Null = null): ZIO[Any, Throwable, Chunk[RecordMetadata]] = {
     val mainTopic = Option(topic).getOrElse(settings.topic)
     val producerRecords = records.map { value =>
       val key = asKey(value)
@@ -101,10 +102,10 @@ final case class DynamicProducer(settings : DynamicProducerSettings, kafkaProduc
       case None => ZIO.succeed(Chunk.empty)
       case Some(head) =>
         for {
-          keySerde <- serdeForValue[K](true, head.key())
+          keySerde   <- serdeForValue[K](true, head.key())
           valueSerde <- serdeForValue[V](false, head.value())
-          job <- kafkaProducer.produceChunkAsync(records, keySerde, valueSerde)
-          result <- job
+          job        <- kafkaProducer.produceChunkAsync(records, keySerde, valueSerde)
+          result     <- job
         } yield result
     }
   }
@@ -112,9 +113,9 @@ final case class DynamicProducer(settings : DynamicProducerSettings, kafkaProduc
   def publish[K <: Supported, V <: Supported](key: K, value: V, topic: String | Null = null): ZIO[Any, Throwable, RecordMetadata] = {
     val mainTopic = Option(topic).getOrElse(settings.topic)
     for {
-      keySerde <- serdeForValue[K](true, key)
+      keySerde   <- serdeForValue[K](true, key)
       valueSerde <- serdeForValue[V](false, value)
-      r <- kafkaProducer.produce(mainTopic, key, value, keySerde, valueSerde)
+      r          <- kafkaProducer.produce(mainTopic, key, value, keySerde, valueSerde)
     } yield r
   }
 }
