@@ -4,7 +4,7 @@ import sbtwelcome._
 
 enablePlugins(GitVersioning)
 
-ThisBuild / scalaVersion := "3.1.2"
+ThisBuild / scalaVersion := "3.1.3"
 
 logo :=
   s"""
