@@ -84,7 +84,7 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
 
   def defaultSeed = System.currentTimeMillis()
 
-  def withConsumerTopic(topic : String) = withOverrides(s"franz.consumer.topic : '${topic}'")
+  def withConsumerTopic(topic: String) = withOverrides(s"franz.consumer.topic : '${topic}'")
 
   def withOverrides(conf: String, theRest: String*): FranzConfig = withOverrides(FranzConfig.asConfig(conf, theRest: _*))
 
@@ -179,7 +179,7 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
   def kafkaProducerTask: ZIO[Scope, Throwable, Producer] = Producer.make(producerSettings)
 
   def batchedStream: Task[BatchedStream] = BatchedStream(this)
-  def batchedStreamLayer = ZLayer.fromZIO(batchedStream)
+  def batchedStreamLayer                 = ZLayer.fromZIO(batchedStream)
 
   def runSink[E1 >: Throwable, Z](sink: => ZSink[Any, E1, CommittableRecord[DynamicJson, DynamicJson], Any, Z])(
       implicit trace: ZTraceElement): ZIO[Any, Any, Z] =
@@ -187,13 +187,14 @@ final case class FranzConfig(franzConfig: Config = ConfigFactory.load().getConfi
       stream.kafkaStream.run(sink)
     }
 
-  def dynamicProducer: DynamicProducer = DynamicProducer(this)
-  def dynamicProducerLayer: ZLayer[Any, Nothing, DynamicProducer] = ZLayer.fromZIO(ZIO.succeed(dynamicProducer))
+  def dynamicProducer: ZIO[Scope, Throwable, DynamicProducer] = DynamicProducerSettings(this).producer
+//  def dynamicProducerLayer: ZLayer[Any, Nothing, DynamicProducer] = ZLayer.fromZIO(dynamicProducer)
+  def dynamicProducerLayer = ZLayer.fromZIO(dynamicProducer)
 
   def kafkaLayer = dynamicProducerLayer ++ batchedStreamLayer ++ adminLayer
 
   def admin: ZIO[Scope, Throwable, AdminClient] = AdminClient.make(adminSettings)
-  def adminLayer = ZLayer.fromZIO(admin)
+  def adminLayer                                = ZLayer.fromZIO(admin)
 
   private def baseUrls = consumerConfig.asList("schema.registry.url").asJava
 

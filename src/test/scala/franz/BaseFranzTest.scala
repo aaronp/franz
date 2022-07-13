@@ -18,10 +18,7 @@ abstract class BaseFranzTest extends AnyWordSpec with Matchers with GivenWhenThe
 
   object IntegrationTest extends Tag("integrationTest")
 
-  given rt: zio.Runtime[ZEnv] = {
-    zio.Runtime.global.unsafeRun(ZIO.scoped(ZEnv.live.toRuntime(RuntimeConfig.default)))
-  }
-
+  given rt: zio.Runtime[ZEnv] = franz.runtime
 
   def testTimeout: Duration = 30.seconds
 

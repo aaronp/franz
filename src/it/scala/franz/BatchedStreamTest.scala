@@ -29,8 +29,6 @@ class BatchedStreamTest extends BaseFranzTest {
   "BatchedStream" should {
     "be able to read avro data" in {
       val data = DataGen(Parent("", 0, Child("", true)))
-      val dp = testConfig.dynamicProducer
-      import dp.*
 
       val avroTopic = s"BatchedStreamTest-${ids.next()}"
 
@@ -38,11 +36,12 @@ class BatchedStreamTest extends BaseFranzTest {
 
       // this test publishes a bunch of different types to different topics, then reads 'em
       val test = for {
-        _       <- publish("key", data.asAvro("this.is.avro"), avroTopic)
-        reader  <- testConfig.batchedStream
+        dp <- testConfig.dynamicProducer
+        _ <- dp.publish("key", data.asAvro("this.is.avro"), avroTopic)
+        reader <- testConfig.batchedStream
         headOpt <- reader.withTopic(avroTopic).kafkaStream.runHead
-        head    <- ZIO.fromOption(headOpt)
-        _       <- ZIO.scoped(testConfig.admin.flatMap(_.deleteTopic(avroTopic)))
+        head <- ZIO.fromOption(headOpt)
+        _ <- ZIO.scoped(testConfig.admin.flatMap(_.deleteTopic(avroTopic)))
       } yield head
 
       val committableRecord: CommittableRecord[DynamicJson, DynamicJson] = rt.unsafeRun(ZIO.scoped(test))
@@ -55,26 +54,25 @@ class BatchedStreamTest extends BaseFranzTest {
       val data = DataGen(Parent("", 0, Child("", true)))
 
       import SchemaGen.*
-      val dp = testConfig.dynamicProducer
-      import dp.*
 
       val jsonTopic = s"topic-json-${ids.next()}"
 
       // this test publishes a bunch of different types to different topics, then reads 'em
       val testCase = for {
-        _       <- publish(data, data, jsonTopic)
-        reader  <- testConfig.batchedStream
+        dp <- testConfig.dynamicProducer
+        _ <- dp.publish(data, data, jsonTopic)
+        reader <- testConfig.batchedStream
         headOpt <- reader.withTopic(jsonTopic).kafkaStream.runHead
-        head    <- ZIO.fromOption(headOpt)
+        head <- ZIO.fromOption(headOpt)
 
         /** TODO - here we should use the schema reg client to try and read the schema for our (json) topic, which should fail */
         admin <- testConfig.admin
-        _     <- admin.deleteTopic(jsonTopic)
+        _ <- admin.deleteTopic(jsonTopic)
       } yield head
 
       val record: CommittableRecord[DynamicJson, DynamicJson] = rt.unsafeRun(ZIO.scoped(testCase))
 
-      val key   = record.key
+      val key = record.key
       val value = record.value
 
       value.as[Parent] shouldBe Success(data.as[Parent].toTry.get)
@@ -82,11 +80,11 @@ class BatchedStreamTest extends BaseFranzTest {
     }
 
     "be able to read from any topic" in {
-      val data     = DataGen.repeatFromTemplate(Parent("", 0, Child("", true)), 10)
+      val data = DataGen.repeatFromTemplate(Parent("", 0, Child("", true)), 10).toSeq
       val expected = (data.size * 2) + 1 // two lots of 10 records, as well as a single numeric record
 
       val avroTopic = s"polypublish-test-avro-${ids.next()}"
-      val numTopic  = s"polypublish-test-numbers-${ids.next()}"
+      val numTopic = s"polypublish-test-numbers-${ids.next()}"
       val jsonTopic = s"polypublish-test-json-${ids.next()}"
 
       import SchemaGen.*
@@ -95,15 +93,16 @@ class BatchedStreamTest extends BaseFranzTest {
 
       // this test publishes a bunch of different types to different topics, then reads 'em
       val testCase = for {
-        _ <- publish(1, 2L, numTopic)
+        dp <- testConfig.dynamicProducer
+        _ <- dp.publish(1, 2L, numTopic)
         _ <- ZIO.foreach(data) { d =>
-          publish(d, d.asAvro("this.is.avro"), avroTopic)
+          dp.publish(d, d.asAvro("this.is.avro"), avroTopic)
         }
         _ <- ZIO.foreach(data) { d =>
-          publish("text", d, jsonTopic)
+          dp.publish("text", d, jsonTopic)
         }
         reader <- testConfig.batchedStream
-        queue  <- reader.withTopics(avroTopic, numTopic, jsonTopic).kafkaStream.take(expected).toIterator
+        queue <- reader.withTopics(avroTopic, numTopic, jsonTopic).kafkaStream.take(expected).toIterator
         takeList = queue.take(expected).toList
         list <- ZIO.foreach(takeList) { either =>
           ZIO.fromEither(either)
