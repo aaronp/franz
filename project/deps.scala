@@ -16,13 +16,13 @@ object deps {
   def logging = List("ch.qos.logback" % "logback-classic" % "1.2.11", "org.slf4j" % "slf4j-api" % "1.7.36")
 
   def scalaTest = List("org.scalactic" %% "scalactic" % "3.2.11" % TestConf,
-    "org.scalatest" %% "scalatest" % "3.2.11" % TestConf,
+    "org.scalatest" %% "scalatest" % "3.2.12" % TestConf,
     "org.pegdown" % "pegdown" % "1.6.0" % TestConf,
     "com.vladsch.flexmark" % "flexmark-all" % "0.64.0" % TestConf,
     "junit" % "junit" % "4.13.2" % TestConf)
 
   def explicitCats = List("cats-core", "cats-kernel").map { art =>
-    ("org.typelevel" %% art % "2.6.1").exclude("org.scala-lang", "scala3-library")
+    ("org.typelevel" %% art % "2.8.0").exclude("org.scala-lang", "scala3-library")
   }
 
   def all: Seq[ModuleID] = scalaTest ++ explicitCats ++ List(
@@ -34,7 +34,7 @@ object deps {
     // config
     "com.typesafe" % "config" % "1.4.2",
     // zio
-    "dev.zio" %% "zio-interop-cats" % "3.3.0-RC5",
+    "dev.zio" %% "zio-interop-cats" % "3.3.0",
     "dev.zio" %% "zio" % "2.0.0-RC5",
     "dev.zio" %% "zio-streams" % deps.zioVersion,
     "dev.zio" %% "zio-test" % deps.zioVersion % TestConf,
@@ -48,7 +48,7 @@ object deps {
     "org.apache.avro" % "avro" % "1.11.0",
     // kafka
     "dev.zio" %% "zio-streams" % zioVersion,
-    "dev.zio" %% "zio-kafka" % "2.0.0-M3",
+    "dev.zio" %% "zio-kafka" % "2.0.0",
     ("io.confluent" % "kafka-streams-avro-serde" % "6.2.1")
       .exclude("org.apache.kafka", "kafka-clients"),
   )
