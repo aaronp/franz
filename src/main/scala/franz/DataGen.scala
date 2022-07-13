@@ -15,19 +15,17 @@ object DataGen {
   /**
     * @return a list of json values representing some test data in the (json) shape of 'A'
     */
-  def repeatFromTemplate[A: Encoder](value: A, num: Int, initialSeed: Seed = Seed()): Seq[Json] = {
-    if num < 1 then Nil
-    else {
-      val jason       = Encoder[A].apply(value)
-      val schema      = SchemaGen(jason)
-      val (s1, first) = recordForSchema(schema, initialSeed)
-      val (list, _) = (0 until num).foldLeft(List(first) -> s1) {
-        case ((list, s), _) =>
-          val (nextSeed, next) = recordForSchema(schema, s)
-          (next +: list, nextSeed)
-      }
-      list
+  def repeatFromTemplate[A: Encoder](value: A, num: Int, initialSeed: Seed = Seed()): Iterator[Json] =
+    repeatFromTemplateIter(value, initialSeed).take(num)
+
+  def repeatFromTemplateIter[A: Encoder](value: A, initialSeed: Seed = Seed()): Iterator[Json] = {
+    val jason       = Encoder[A].apply(value)
+    val schema      = SchemaGen(jason)
+    val (s1, first) = recordForSchema(schema, initialSeed)
+    val tail = Iterator.from(0).scanLeft((s1, first)) {
+      case ((seed, _), _) => recordForSchema(schema, seed)
     }
+    Iterator(first) ++ tail.map(_._2)
   }
 
   def apply[A: Encoder](value: A, seed: Seed = Seed()): Json = {
@@ -49,11 +47,16 @@ object DataGen {
 
   case class Gen(seed: Long) {
     def string: String = eie.io.AlphaCounter.from(seed).next()
-    def long: Long     = seed
-    def int: Int       = seed.toInt
-    def float: Float   = seed.toFloat
+
+    def long: Long = seed
+
+    def int: Int = seed.toInt
+
+    def float: Float = seed.toFloat
+
     def double: Double = seed.toDouble
-    def bool: Boolean  = (seed % 7).isOdd
+
+    def bool: Boolean = (seed % 7).isOdd
   }
 
   object Gen {
@@ -69,8 +72,8 @@ object DataGen {
   /**
     *
     * @param schema the avro schema
-    * @param seed the initial seed used for 'random' values
-    * @param gen the generator (state monad for FP randomness (so we can have FP 'random' values - e.g. they're consistent))
+    * @param seed   the initial seed used for 'random' values
+    * @param gen    the generator (state monad for FP randomness (so we can have FP 'random' values - e.g. they're consistent))
     * @return the seed (which can be ignored/dropped) and some test data
     */
   def recordForSchema(schema: Schema, seed: Seed = Seed(), gen: Seed => (Seed, Gen) = Gen.forSeed): (Seed, Json) = {
