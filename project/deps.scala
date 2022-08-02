@@ -45,7 +45,7 @@ object deps {
     "io.circe" %% "circe-generic" % "0.14.2",
     "io.circe" %% "circe-parser" % "0.14.2",
     // avro
-    "org.apache.avro" % "avro" % "1.11.0",
+    "org.apache.avro" % "avro" % "1.11.1",
     // kafka
     "dev.zio" %% "zio-streams" % zioVersion,
     "dev.zio" %% "zio-kafka" % "2.0.0",
