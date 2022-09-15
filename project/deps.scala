@@ -13,7 +13,7 @@ object deps {
   def typesafeConfig: ModuleID = "com.typesafe" % "config" % "1.4.2"
 
   //val logback      =
-  def logging = List("ch.qos.logback" % "logback-classic" % "1.2.11", "org.slf4j" % "slf4j-api" % "1.7.36")
+  def logging = List("ch.qos.logback" % "logback-classic" % "1.4.1", "org.slf4j" % "slf4j-api" % "1.7.36")
 
   def scalaTest = List("org.scalactic" %% "scalactic" % "3.2.11" % TestConf,
     "org.scalatest" %% "scalatest" % "3.2.12" % TestConf,
@@ -40,7 +40,7 @@ object deps {
     "dev.zio" %% "zio-test" % deps.zioVersion % TestConf,
     "dev.zio" %% "zio-test-sbt" % deps.zioVersion % TestConf,
     // logging
-    "ch.qos.logback" % "logback-classic" % "1.2.11",
+    "ch.qos.logback" % "logback-classic" % "1.4.1",
     // circe
     "io.circe" %% "circe-generic" % "0.14.2",
     "io.circe" %% "circe-parser" % "0.14.2",
