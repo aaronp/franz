@@ -42,8 +42,8 @@ object deps {
     // logging
     "ch.qos.logback" % "logback-classic" % "1.2.11",
     // circe
-    "io.circe" %% "circe-generic" % "0.14.2",
-    "io.circe" %% "circe-parser" % "0.14.2",
+    "io.circe" %% "circe-generic" % "0.14.3",
+    "io.circe" %% "circe-parser" % "0.14.3",
     // avro
     "org.apache.avro" % "avro" % "1.11.0",
     // kafka
