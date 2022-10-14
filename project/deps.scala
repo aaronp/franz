@@ -15,7 +15,7 @@ object deps {
   //val logback      =
   def logging = List("ch.qos.logback" % "logback-classic" % "1.2.11", "org.slf4j" % "slf4j-api" % "1.7.36")
 
-  def scalaTest = List("org.scalactic" %% "scalactic" % "3.2.11" % TestConf,
+  def scalaTest = List("org.scalactic" %% "scalactic" % "3.2.14" % TestConf,
     "org.scalatest" %% "scalatest" % "3.2.12" % TestConf,
     "org.pegdown" % "pegdown" % "1.6.0" % TestConf,
     "com.vladsch.flexmark" % "flexmark-all" % "0.64.0" % TestConf,
