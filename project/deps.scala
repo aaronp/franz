@@ -22,7 +22,7 @@ object deps {
     "junit" % "junit" % "4.13.2" % TestConf)
 
   def explicitCats = List("cats-core", "cats-kernel").map { art =>
-    ("org.typelevel" %% art % "2.8.0").exclude("org.scala-lang", "scala3-library")
+    ("org.typelevel" %% art % "2.9.0").exclude("org.scala-lang", "scala3-library")
   }
 
   def all: Seq[ModuleID] = scalaTest ++ explicitCats ++ List(
