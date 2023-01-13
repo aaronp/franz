@@ -48,7 +48,7 @@ object deps {
     "org.apache.avro" % "avro" % "1.11.0",
     // kafka
     "dev.zio" %% "zio-streams" % zioVersion,
-    "dev.zio" %% "zio-kafka" % "2.0.0",
+    "dev.zio" %% "zio-kafka" % "2.0.4",
     ("io.confluent" % "kafka-streams-avro-serde" % "6.2.1")
       .exclude("org.apache.kafka", "kafka-clients"),
   )
