@@ -1,7 +1,7 @@
 import sbt._
 
 object deps {
-  def zioVersion = "2.0.0-RC5"
+  def zioVersion = "2.0.7"
   
   val TestConf = "it,test"
 
@@ -35,7 +35,7 @@ object deps {
     "com.typesafe" % "config" % "1.4.2",
     // zio
     "dev.zio" %% "zio-interop-cats" % "3.3.0",
-    "dev.zio" %% "zio" % "2.0.0-RC5",
+    "dev.zio" %% "zio" % "2.0.7",
     "dev.zio" %% "zio-streams" % deps.zioVersion,
     "dev.zio" %% "zio-test" % deps.zioVersion % TestConf,
     "dev.zio" %% "zio-test-sbt" % deps.zioVersion % TestConf,
